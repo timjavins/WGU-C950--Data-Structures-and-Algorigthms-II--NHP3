@@ -20,7 +20,10 @@ class DataParser:
             for row in reader:
                 location = self.map_locations_reverse[row[0]]
                 try:
-                    self.distances[location] = {self.map_locations_reverse[self.locations[i]]: float(row[i + 1]) for i in range(len(self.locations)) if row[i + 1] and row[i + 1].replace('.', '', 1).isdigit()}
+                    self.distances[location] = [
+                        float(row[i + 1]) for i in range(len(self.locations))
+                        if row[i + 1] and row[i + 1].replace('.', '', 1).isdigit()
+                    ]
                 except ValueError:
                     continue
 

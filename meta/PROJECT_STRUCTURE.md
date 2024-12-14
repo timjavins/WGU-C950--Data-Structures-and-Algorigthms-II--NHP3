@@ -6,7 +6,7 @@ This document explains the structure of the WGUPS Package Routing project.
 
 - `.gitignore`: Specifies files and directories to be ignored by Git.
 - `LICENSE.md`: Contains the license information for the project.
-- `Makefile`: Defines tasks for building, running, and generating PDFs.
+- `Makefile`: Defines tasks for building the app, running the app, and generating PDFs.
 - `README.md`: Provides an overview and documentation for the project.
 - `requirements.txt`: Lists the Python dependencies required for the project.
 
@@ -49,40 +49,38 @@ Contains scripts for generating assets and converting markdown to PDF.
 - `inline_code.tex`: LaTeX file for inline code formatting in the PDF.
 - `md2pdf.sh`: Shell script for converting markdown to PDF using Pandoc.
 
-### wgups/
+### parcel_pilot/
 
 Main application directory, further divided into subdirectories.
 
 - `__init__.py`: Initializes the wgups package.
 - `__main__.py`: Entry point for running the application.
 
-#### wgups/data/
+#### parcel_pilot/data/
 
 Handles data loading and storage.
 
 - `__init__.py`: Initializes the data package.
-- `data_loader.py`: Loads external data into the application.
-- `distance_table.py`: Stores distances between destinations.
-- `package_table.py`: Manages packages to be delivered.
 
-#### wgups/routing/
+#### parcel_pilot/router/
 
 Manages routing logic and entities.
 
 - `__init__.py`: Initializes the routing package.
 - `depot.py`: Central hub for route planning and package distribution.
+- `package_handler.py`: Handles package data operations.
 - `package.py`: Represents individual packages.
 - `truck.py`: Represents delivery trucks.
 
-#### wgups/structures/
+#### parcel_pilot/simulator/
 
-Contains custom data structures.
+Contains simulation-related classes and functions.
 
-- `__init__.py`: Initializes the structures package.
-- `clock.py`: Represents a time in minutes since the start of the delivery period.
-- `hash_set.py`: Implementation of a hash table using linear probing.
+- `__init__.py`: Initializes the simulator package.
+- `interface.py`: Provides the user interface for the time simulator.
+- `time_sim.py`: Contains functions for calculating simulated time and minutes based on user input.
 
-#### wgups/utils/
+#### parcel_pilot/utils/
 
 Utility classes and functions.
 
@@ -97,4 +95,4 @@ Utility classes and functions.
 To run the application, use the following command:
 
 ```sh
-python3 -m wgups
+python3 -m parcelpilot

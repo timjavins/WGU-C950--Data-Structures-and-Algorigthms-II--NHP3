@@ -1,7 +1,8 @@
 # parser.py
 
 import csv
-from helpers import find_partial_match, array_to_dict, reverse_dict
+from helpers import find_partial_match, array_to_dict, reverse_dict, convert_to_24_hour_format
+from data.packages import Package
 
 class DataParser:
     def __init__(self):
@@ -33,11 +34,14 @@ class DataParser:
             for row in reader:
                 location_lookup = find_partial_match(self.locations, row['Address'])
                 location = self.map_locations_reverse[location_lookup] if location_lookup else None
-                info = {
-                    'PID': row['PID'],
-                    'Destination': location,
-                    'Deadline': row['Deadline'],
-                    'Zip': row['Zip'],
-                    'Notes': row['Notes']
-                }
-                self.packages.append(info)
+                package = Package(
+                    pid=row['PID'],
+                    address=row['Address'],
+                    city=row['City'],
+                    state=row['State'],
+                    zip_code=row['Zip'],
+                    deadline=convert_to_24_hour_format(row['Deadline']) if row['Deadline'] != "EOD" else "EOD",
+                    weight=row['Weight'],
+                    notes=row['Notes']
+                )
+                self.packages.append(package)

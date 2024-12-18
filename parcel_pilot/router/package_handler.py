@@ -3,12 +3,12 @@ import re
 def link_packages(packages):
     linked_packages = {}
     for package in packages:
-        if package['Notes'].startswith('Must be delivered with'):
+        if package.notes.startswith('Must be delivered with'):
             # extract the linked package IDs by looking for numbers in the notes via regex
-            links = re.findall(r'\d+', package['Notes'])
+            links = re.findall(r'\d+', package.notes)
             # add the PID to the list of linked packages
-            if package['PID'] not in linked_packages:
-                linked_packages[package['PID']] = links
+            if package.pid not in linked_packages:
+                linked_packages[package.pid] = links
     print("Linked Packages:", linked_packages)
     return linked_packages
 
@@ -35,14 +35,27 @@ def group_linked_packages(linked_packages):
     return groups
 
 def prioritize_packages(packages):
-    # Create a dictionary to store the priority of each package
-    priority_dict = {}
-    for package in packages:
-        # Extract the priority number from the notes field
-        priority = re.search(r'\d+', package['Notes'])
-        # If a priority number is found, assign it to the package ID in the dictionary
-        if priority:
-            priority_dict[package['PID']] = int(priority.group())
-    # Sort the packages based on priority, with higher priority packages first
-    sorted_packages = sorted(packages, key=lambda x: priority_dict.get(x['PID'], 0), reverse=True)
-    return sorted_packages
+    # Initialize the priority value
+    i = 1
+    # Assign priorities based on deadlines
+    while any(package.priority == -1 for package in packages):
+        # Find the next package with a priority of -1
+        for package in packages:
+            if package.priority == -1:
+                if package.delivery_deadline == "EOD":
+                    package.priority = 0
+                else:
+                    # Find the lowest text-based time value among all packages with priority -1
+                    lowest_deadline = min(
+                        (p.delivery_deadline for p in packages if p.priority == -1 and p.delivery_deadline != "EOD"),
+                        default=None
+                    )
+                    if lowest_deadline:
+                        # Assign the current priority value to all packages with the same deadline
+                        for p in packages:
+                            if p.delivery_deadline == lowest_deadline and p.priority == -1:
+                                p.priority = i
+                        # Increment the priority value
+                        i += 1
+                break
+    return packages

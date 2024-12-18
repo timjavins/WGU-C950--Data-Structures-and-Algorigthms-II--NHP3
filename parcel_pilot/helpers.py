@@ -1,5 +1,7 @@
 # helpers.py
 
+from datetime import datetime
+
 def find_partial_match(locations, partial_string):
     """
     Finds a partial match in the locations array and returns the matched value.
@@ -39,3 +41,6 @@ def reverse_dict(dictionary):
     dict: A new dictionary with keys and values swapped.
     """
     return {value: key for key, value in dictionary.items()}
+
+def convert_to_24_hour_format(time_str):
+    return datetime.strptime(time_str, "%I:%M %p").strftime("%H:%M")

@@ -2,8 +2,8 @@
 
 from data.parser import DataParser
 from router.package_handler import link_packages, group_linked_packages
-from simulator.interface import TimeSimulatorUI
-from data.trucks import Truck
+from simulator.interface import TimeSimulatorUI, InfoDisplayUI
+from data.trucks import TruckManager
 import tkinter as tk
 from datetime import datetime, timedelta
 
@@ -34,15 +34,42 @@ print()
 print("Grouped Packages:", grouped_packages)
 print()
 
-# Create three trucks
-truck_0 = Truck(0)
-truck_1 = Truck(1)
-truck_2 = Truck(2)
+# Create a TruckManager instance
+truck_manager = TruckManager()
+
+# Get trucks using the manager
+truck_0 = truck_manager.get_truck(0)
+truck_1 = truck_manager.get_truck(1)
+truck_2 = truck_manager.get_truck(2)
+
+# Function to center a window on the screen
+def center_window(window, width, height):
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x = (screen_width // 2) - (width // 2)
+    y = (screen_height // 2) - (height // 2)
+    window.geometry(f'{width}x{height}+{x}+{y}')
 
 # Initialize and run the UI
 def main():
     root = tk.Tk()
-    app = TimeSimulatorUI(root)
+    time_simulator_root = tk.Toplevel()
+    # Create the UI instances
+    timer = TimeSimulatorUI(time_simulator_root)
+    dashboard = InfoDisplayUI(root, timer, packages, [truck_0, truck_1, truck_2])
+    # Center the InfoDisplayUI window
+    root.update_idletasks()
+    center_window(root, root.winfo_width(), root.winfo_height())
+    # Position the TimeSimulatorUI window immediately beneath the InfoDisplayUI window
+    def position_time_simulator():
+        _ = time_simulator_root
+        x = screen_width = _.winfo_screenwidth() // 2 - _.winfo_width() // 2
+        root_y = root.winfo_y() - _.winfo_height() - 30
+        time_simulator_root.update_idletasks()
+        time_simulator_root.geometry(f'+{x}+{root_y}')
+    # Schedule the positioning of the TimeSimulatorUI window
+    root.after(1, position_time_simulator)    
+    # Run the main loop
     root.mainloop()
 
 if __name__ == "__main__":

@@ -1,5 +1,14 @@
 from datetime import datetime, timedelta
 
+class TruckManager:
+    def __init__(self):
+        self.trucks = {}
+
+    def get_truck(self, truck_id):
+        if truck_id not in self.trucks:
+            self.trucks[truck_id] = Truck(truck_id)
+        return self.trucks[truck_id]
+
 class Truck:
     def __init__(self, truck_id):
         self.truck_id = truck_id
@@ -36,15 +45,3 @@ class Truck:
 
             # Log the location and time of arrival
             self.travel_log.append((self.current_location, current_time))
-
-# Create three trucks
-truck_0 = Truck(0)
-truck_1 = Truck(1)
-truck_2 = Truck(2)
-
-# # Simulate travel
-# current_time = truck_0.get_current_time() + timedelta(minutes=20)  # Simulate 20 minutes later
-# truck_0.update_position(current_time, map_locations)
-
-# print("Truck 0 Travel Log:", truck_0.travel_log)
-# print("Truck 0 Total Distance:", truck_0.total_distance)

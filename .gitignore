@@ -1,2 +1,4 @@
 /PiP_Pro.zip
 /Untitled-2.py
+*.pyc
+__pycache__/

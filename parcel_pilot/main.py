@@ -1,8 +1,6 @@
-# main.py
-
 from data.parser import DataParser
-from router.package_handler import link_packages, group_linked_packages
-from simulator.interface import TimeSimulatorUI, InfoDisplayUI
+from router.package_handler import link_packages, group_linked_packages, prioritize_packages, intake_packages
+from simulator.interface import TimeSimulatorUI, InfoDisplayUI, center_window, position_time_simulator, on_closing
 from data.trucks import TruckManager
 import tkinter as tk
 from datetime import datetime, timedelta
@@ -22,12 +20,16 @@ map_locations_reverse = data_parser.map_locations_reverse
 packages = data_parser.packages
 
 # Process the packages
+intake_packages(packages, "08:00")
+prioritize_packages(packages)
 linked_packages = link_packages(packages)
 grouped_packages = group_linked_packages(linked_packages)
 
 print("Locations:", map_locations)
 print()
-print("Packages:", packages)
+print("Packages:")
+for package in packages:
+    print(package)
 print()
 print("Distances:", distances)
 print()
@@ -42,33 +44,23 @@ truck_0 = truck_manager.get_truck(0)
 truck_1 = truck_manager.get_truck(1)
 truck_2 = truck_manager.get_truck(2)
 
-# Function to center a window on the screen
-def center_window(window, width, height):
-    screen_width = window.winfo_screenwidth()
-    screen_height = window.winfo_screenheight()
-    x = (screen_width // 2) - (width // 2)
-    y = (screen_height // 2) - (height // 2)
-    window.geometry(f'{width}x{height}+{x}+{y}')
-
 # Initialize and run the UI
 def main():
-    root = tk.Tk()
-    time_simulator_root = tk.Toplevel()
-    # Create the UI instances
-    timer = TimeSimulatorUI(time_simulator_root)
+    root = tk.Tk() # Create the main window for the InfoDisplayUI
+    sub_root = tk.Toplevel() # Create a sub window for the TimeSimulatorUI
+    # Instantiate the user interface components
+    timer = TimeSimulatorUI(sub_root)
     dashboard = InfoDisplayUI(root, timer, packages, [truck_0, truck_1, truck_2])
     # Center the InfoDisplayUI window
     root.update_idletasks()
     center_window(root, root.winfo_width(), root.winfo_height())
+    # Ensure the InfoDisplayUI window's position and size are updated
+    root.update_idletasks()
     # Position the TimeSimulatorUI window immediately beneath the InfoDisplayUI window
-    def position_time_simulator():
-        _ = time_simulator_root
-        x = screen_width = _.winfo_screenwidth() // 2 - _.winfo_width() // 2
-        root_y = root.winfo_y() - _.winfo_height() - 30
-        time_simulator_root.update_idletasks()
-        time_simulator_root.geometry(f'+{x}+{root_y}')
-    # Schedule the positioning of the TimeSimulatorUI window
-    root.after(1, position_time_simulator)    
+    position_time_simulator(root, sub_root)
+    # Bind the close event to the on_closing function
+    root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, sub_root))
+    sub_root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root, sub_root))
     # Run the main loop
     root.mainloop()
 

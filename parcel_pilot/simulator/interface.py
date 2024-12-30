@@ -9,6 +9,9 @@ class InfoDisplayUI:
         self.time_simulator = time_simulator
         self.root.title("Parcel Pilot Dashboard")
 
+        # Set the callback for time updates
+        self.time_simulator.set_time_update_callback(self.update_time)
+
         # Current time display
         self.time_label = ttk.Label(root, text="", font=("Helvetica", 16))
         self.time_label.pack(pady=10)
@@ -40,9 +43,9 @@ class InfoDisplayUI:
         self.update_time()
 
     def update_time(self):
-        current_time = self.time_simulator.get_current_time()
-        self.time_label.config(text=f"Current Time: {current_time}")
-        self.root.after(1000, self.update_time)  # Update every second
+        if not self.time_simulator.is_editing: # This should run when the user is editing the time input
+            current_time = self.time_simulator.get_current_time()
+            self.time_label.config(text=f"Current Time: {current_time}")
 
     def populate_package_info(self, packages):
         for package in packages:
@@ -57,6 +60,8 @@ class TimeSimulatorUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Time Simulator")
+        self.is_editing = False # Flag to track if the user is editing the time input
+        self.time_update_callback = None # Instance variable to store the callback function
 
         # Slider
         self.slider = ttk.Scale(root, from_=0, to=540, orient='horizontal', length=540, command=self.update_time)
@@ -73,15 +78,22 @@ class TimeSimulatorUI:
         # Initialize the display
         self.update_time(0)
 
+    # Set the callback function for time updates
+    def set_time_update_callback(self, callback):
+        self.time_update_callback = callback
+
     def update_time(self, value):
         minutes_passed = int(float(value))
         current_time, _ = calculate_time(minutes_passed)
         self.time_var.set(current_time)
+        if self.time_update_callback:
+            self.time_update_callback() # Send the new time to other functions
 
     def get_current_time(self):
         return self.time_var.get()
 
     def on_focus_in(self, event):
+        self.is_editing = True  # Set flag to True when editing starts
         self.time_input.selection_range(0, tk.END)
 
     def on_focus_out(self, event):
@@ -105,9 +117,30 @@ class TimeSimulatorUI:
         else:
             messagebox.showerror("Invalid Input", "Please enter a 24-hour time in HHMM or HH:MM format.")
             self.update_time(self.slider.get())
+        self.is_editing = False  # Set flag back to False when editing ends
+        if self.time_update_callback:
+            self.time_update_callback() # Send the new time to other functions
 
-# Example usage
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = TimeSimulatorUI(root)
-    root.mainloop()
+def center_window(window, width, height):
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x = (screen_width // 2) - (width // 2)
+    y = (screen_height // 2) - (height // 2)
+    window.geometry(f'{width}x{height}+{x}+{y}')
+
+# Position the TimeSimulatorUI (sub_root) window immediately above the InfoDisplayUI (root) window
+def position_time_simulator(root, sub_root):
+    x = screen_width = sub_root.winfo_screenwidth() // 2 - sub_root.winfo_width() // 2
+    root_y = root.winfo_y() - sub_root.winfo_height() - 31
+    sub_root.geometry(f'+{x}+{root_y}')
+
+# Close both windows when one window is closed
+def on_closing(root, sub_root):
+    try:
+        root.destroy()
+    except tk.TclError:
+        pass
+    try:
+        sub_root.destroy()
+    except tk.TclError:
+        pass

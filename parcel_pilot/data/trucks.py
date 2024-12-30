@@ -10,6 +10,8 @@ class TruckManager:
         return self.trucks[truck_id]
 
 class Truck:
+    MAX_CAPACITY = 16 # Maximum load capacity of these trucks
+
     def __init__(self, truck_id):
         self.truck_id = truck_id
         self.packages = []
@@ -21,7 +23,11 @@ class Truck:
         self.travel_log = []
 
     def add_package(self, package):
-        self.packages.append(package)
+        if len(self.packages) < self.MAX_CAPACITY:
+            self.packages.append(package)
+            package.truck_id = self.truck_id
+        else:
+            raise ValueError(f"Truck {self.truck_id} is at full capacity")
 
     def set_destination(self, destination, distance):
         self.destination = destination

@@ -19,12 +19,19 @@ class InfoDisplayUI:
         # Package information display
         self.package_frame = ttk.Frame(root)
         self.package_frame.pack(pady=10)
-        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Location", "Truck"), show="headings")
+        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Location", "Truck", "Group", "Priority"), show="headings")
         self.package_tree.heading("PID", text="PID")
         self.package_tree.heading("Status", text="Status")
         self.package_tree.heading("Location", text="Location")
         self.package_tree.heading("Truck", text="Truck")
+        self.package_tree.heading("Group", text="Group")
+        self.package_tree.heading("Priority", text="Priority")
         self.package_tree.pack()
+
+        # Configure tags for alternating row colors
+        self.package_tree.tag_configure("oddrow", background="#ffffff") # white
+        self.package_tree.tag_configure("evenrow", background="#f0f0ff") # light blue
+
 
         # Truck information display
         self.truck_frame = ttk.Frame(root)
@@ -35,6 +42,10 @@ class InfoDisplayUI:
         self.truck_tree.heading("Location", text="Location")
         self.truck_tree.pack()
 
+        # Configure tags for alternating row colors
+        self.truck_tree.tag_configure("oddrow", background="#ffffff") # white
+        self.truck_tree.tag_configure("evenrow", background="#f0f0ff") # light blue
+
         # Populate the information
         self.populate_package_info(packages)
         self.populate_truck_info(trucks)
@@ -43,25 +54,69 @@ class InfoDisplayUI:
         self.update_time()
 
     def update_time(self):
-        if not self.time_simulator.is_editing: # This should run when the user is editing the time input
+        if not self.time_simulator.is_editing: # This should not run when the user is editing the time input
             current_time = self.time_simulator.get_current_time()
             self.time_label.config(text=f"Current Time: {current_time}")
+            simulation_state = self.time_simulator.get_simulation_state(current_time)
+            if simulation_state:
+                self.update_display(simulation_state)
+
+    def update_display(self, simulation_state):
+        """
+        Updates the display with the given simulation state.
+        
+        Parameters:
+        simulation_state (dict): The simulation state containing the states of packages and trucks.
+        """
+        # Clear the current display
+        for item in self.package_tree.get_children():
+            self.package_tree.delete(item)
+        for item in self.truck_tree.get_children():
+            self.truck_tree.delete(item)
+        # Populate the package information
+        self.populate_package_info(simulation_state["packages"])
+        # Populate the truck information
+        self.populate_truck_info(simulation_state["trucks"])
 
     def populate_package_info(self, packages):
-        for package in packages:
-            self.package_tree.insert("", "end", values=(package.pid, package.status, package.location, package.truck_id))
+        for index, package in enumerate(packages):
+            tag = 'evenrow' if index % 2 == 0 else 'oddrow'
+            self.package_tree.insert(
+                "",
+                "end",
+                values=(
+                    package.pid,
+                    package.status,
+                    package.location,
+                    package.truck_id,
+                    package.group,
+                    package.priority
+                    ),
+                tags=(tag,)
+            )
 
     def populate_truck_info(self, trucks):
-        for truck in trucks:
+        for index, truck in enumerate(trucks):
+            tag = 'evenrow' if index % 2 == 0 else 'oddrow'
             package_ids = ", ".join(str(pkg.pid) for pkg in truck.packages)
-            self.truck_tree.insert("", "end", values=(truck.truck_id, package_ids, truck.current_location))
+            self.truck_tree.insert(
+                "",
+                "end",
+                values=(
+                    truck.truck_id,
+                    package_ids,
+                    truck.current_location
+                ),
+                tags=(tag,)
+            )
 
 class TimeSimulatorUI:
-    def __init__(self, root):
+    def __init__(self, root, simulation_states):
         self.root = root
         self.root.title("Time Simulator")
         self.is_editing = False # Flag to track if the user is editing the time input
         self.time_update_callback = None # Instance variable to store the callback function
+        self.simulation_states = simulation_states  # Store the precomputed simulation states
 
         # Slider
         self.slider = ttk.Scale(root, from_=0, to=540, orient='horizontal', length=540, command=self.update_time)
@@ -87,7 +142,7 @@ class TimeSimulatorUI:
         current_time, _ = calculate_time(minutes_passed)
         self.time_var.set(current_time)
         if self.time_update_callback:
-            self.time_update_callback() # Send the new time to other functions
+            self.time_update_callback() # Send the new time to other methods
 
     def get_current_time(self):
         return self.time_var.get()
@@ -120,6 +175,18 @@ class TimeSimulatorUI:
         self.is_editing = False  # Set flag back to False when editing ends
         if self.time_update_callback:
             self.time_update_callback() # Send the new time to other functions
+
+    def get_simulation_state(self, time_str):
+        """
+        Allows passing the precomputed simulation state for the given time to other methods.
+
+        Parameters:
+        time_str (str): The time in 24-hour format (HH:MM).
+
+        Returns:
+        dict: The simulation state for the given time.
+        """
+        return self.simulation_states.get(time_str, None)
 
 def center_window(window, width, height):
     screen_width = window.winfo_screenwidth()

@@ -1,10 +1,11 @@
 import re
+from data.trucks import Truck
 
 class Distributor:
     def __init__(self, trucks):
         self.trucks = trucks
 
-    def distribute_packages(self, packages):
+    def distribute_packages(self, packages, grouped_packages):
         # Find the highest priority number
         highest_priority = max(package.priority for package in packages)
 

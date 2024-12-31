@@ -5,6 +5,7 @@ from data.trucks import TruckManager
 from router.distributor import Distributor
 import tkinter as tk
 from simulator.time_sim import precompute_simulation_states
+from data.packages import Package
 
 # Create an instance of DataParser
 data_parser = DataParser()
@@ -18,7 +19,7 @@ distances = data_parser.distances
 locations = data_parser.locations
 map_locations = data_parser.map_locations
 map_locations_reverse = data_parser.map_locations_reverse
-packages = data_parser.packages
+packages = data_parser.initialize_packages()
 
 # Process the packages
 intake_packages(packages, "08:00")

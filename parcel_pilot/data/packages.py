@@ -1,5 +1,5 @@
 class Package:
-    def __init__(self, pid, address, city, state, zip_code, deadline, weight, notes):
+    def __init__(self, pid, address, city, state, zip_code, deadline, weight, status, notes):
         self.pid = pid
         self.address = address
         self.city = city
@@ -8,7 +8,7 @@ class Package:
         self.deadline = deadline
         self.weight = weight
         self.notes = notes
-        self.status = "IN TRANSIT"  # Default status
+        self.status = status
         self.priority = -1  # Default priority
         self.truck_id = None
         self.location = None

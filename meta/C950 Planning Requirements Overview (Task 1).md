@@ -59,7 +59,7 @@ Write an overview of your program in which you do the following:
 #### C1. Algorithm’s Logic
 Explain the algorithm’s logic using pseudocode.
 
-*Note: You may refer to the attached “Sample Core Algorithm Overview” to complete part C1.*
+*Note: You may refer to the attached “Sample Core Algorithm Overview” to complete part C1.* (../Originals/Sample Core Algorithm Overiew.md)
 
 #### C2. Development Environment
 Describe the programming environment you will use to create the Python application, including both the software and hardware you will use.

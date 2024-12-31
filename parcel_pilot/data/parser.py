@@ -1,7 +1,8 @@
 # parser.py
 
 import csv
-from helpers import find_partial_match, array_to_dict, reverse_dict, convert_to_24_hour_format
+from data.hash_table import HashTable
+from helpers import find_partial_match, convert_to_24_hour_format, array_to_dict, reverse_dict
 from data.packages import Package
 
 class DataParser:
@@ -10,7 +11,7 @@ class DataParser:
         self.locations = []
         self.map_locations = {}
         self.map_locations_reverse = {}
-        self.packages = []
+        self.packages = HashTable()
 
     def parse_distance_table(self, file_path):
         with open(file_path, mode='r') as file:
@@ -34,14 +35,35 @@ class DataParser:
             for row in reader:
                 location_lookup = find_partial_match(self.locations, row['Address'])
                 location = self.map_locations_reverse[location_lookup] if location_lookup else None
-                package = Package(
-                    pid=row['PID'],
-                    address=row['Address'],
-                    city=row['City'],
-                    state=row['State'],
-                    zip_code=row['Zip'],
-                    deadline=convert_to_24_hour_format(row['Deadline']) if row['Deadline'] != "EOD" else "EOD",
-                    weight=row['Weight'],
-                    notes=row['Notes']
+                self.packages.insert(
+                    row['PID'],
+                    row['Address'],
+                    row['City'],
+                    row['State'],
+                    row['Zip'],
+                    convert_to_24_hour_format(row['Deadline']) if row['Deadline'] != "EOD" else "EOD",
+                    row['Weight'],
+                    'IN TRANSIT',
+                    row['Notes']
                 )
-                self.packages.append(package)
+    
+    def initialize_packages(self):
+        packages = []
+        for pid in range(self.packages.size):
+            # Ignore empty buckets in the hash table
+            if self.packages.table[pid] is None:
+                continue
+            for package_data in self.packages.table[pid]:
+                package = Package(
+                    pid=package_data[0],
+                    address=package_data[1],
+                    city=package_data[2],
+                    state=package_data[3],
+                    zip_code=package_data[4],
+                    deadline=package_data[5],
+                    weight=package_data[6],
+                    status=package_data[7],
+                    notes=package_data[8]
+                )
+                packages.append(package)
+        return packages

@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from simulator.time_sim import calculate_time, calculate_minutes
+from simulator.time_sim import calculate_time, calculate_minutes, precompute_simulation_states
 import re
 
 class InfoDisplayUI:
@@ -9,7 +9,7 @@ class InfoDisplayUI:
         self.time_simulator = time_simulator
         self.root.title("Parcel Pilot Dashboard")
 
-        # Set the callback for time updates
+        # Set the callback mechanism for time updates
         self.time_simulator.set_time_update_callback(self.update_time)
 
         # Current time display
@@ -28,7 +28,7 @@ class InfoDisplayUI:
         self.package_tree.heading("Priority", text="Priority")
         self.package_tree.pack()
 
-        # Configure tags for alternating row colors
+        # Configure TKinter tags for alternating row colors in package_tree
         self.package_tree.tag_configure("oddrow", background="#ffffff") # white
         self.package_tree.tag_configure("evenrow", background="#f0f0ff") # light blue
 
@@ -36,15 +36,28 @@ class InfoDisplayUI:
         # Truck information display
         self.truck_frame = ttk.Frame(root)
         self.truck_frame.pack(pady=10)
-        self.truck_tree = ttk.Treeview(self.truck_frame, columns=("Truck ID", "Packages", "Location"), show="headings")
+        self.truck_tree = ttk.Treeview(self.truck_frame, columns=("Truck ID", "Packages", "Location", "Miles"), show="headings")
         self.truck_tree.heading("Truck ID", text="Truck ID")
         self.truck_tree.heading("Packages", text="Packages")
         self.truck_tree.heading("Location", text="Location")
+        self.truck_tree.heading("Miles", text="Miles")
         self.truck_tree.pack()
 
-        # Configure tags for alternating row colors
+        # Configure TKinter tags for alternating row colors in truck_tree
         self.truck_tree.tag_configure("oddrow", background="#ffffff") # white
         self.truck_tree.tag_configure("evenrow", background="#f0f0ff") # light blue
+
+        # Summary information display
+        self.package_frame = ttk.Frame(root)
+        self.package_frame.pack(pady=10)
+        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Location", "Truck", "Group", "Priority"), show="headings")
+        self.package_tree.heading("PID", text="PID")
+        self.package_tree.heading("Status", text="Status")
+        self.package_tree.heading("Location", text="Location")
+        self.package_tree.heading("Truck", text="Truck")
+        self.package_tree.heading("Group", text="Group")
+        self.package_tree.heading("Priority", text="Priority")
+        self.package_tree.pack()
 
         # Populate the information
         self.populate_package_info(packages)
@@ -105,7 +118,8 @@ class InfoDisplayUI:
                 values=(
                     truck.truck_id,
                     package_ids,
-                    truck.current_location
+                    truck.current_location,
+                    truck.total_distance
                 ),
                 tags=(tag,)
             )

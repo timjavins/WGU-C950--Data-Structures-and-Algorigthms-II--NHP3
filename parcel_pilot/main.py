@@ -6,6 +6,7 @@ from router.distributor import Distributor
 import tkinter as tk
 from simulator.time_sim import precompute_simulation_states
 from data.packages import Package
+from router.nearest_neighbor import nearest_neighbor_algorithm
 
 # Create an instance of DataParser
 data_parser = DataParser()
@@ -21,13 +22,18 @@ map_locations = data_parser.map_locations
 map_locations_reverse = data_parser.map_locations_reverse
 packages = data_parser.initialize_packages()
 
-# Process the packages
-intake_packages(packages, "08:00")
-prioritize_packages(packages)
+# Group the packages
 linked_packages = link_packages(packages)
 grouped_packages = group_linked_packages(linked_packages, packages)
 
+# Determine preliminary delivery order
+delivery_order = nearest_neighbor_algorithm(0, packages, distances, map_locations_reverse, map_locations)
+
+print("MAIN.PY")
+print("")
 print("Locations:", map_locations)
+print()
+print("Reverse:", map_locations_reverse)
 print()
 print("Packages:")
 for package in packages:
@@ -45,16 +51,9 @@ truck_manager = TruckManager()
 truck_0 = truck_manager.get_truck(0)
 truck_1 = truck_manager.get_truck(1)
 truck_2 = truck_manager.get_truck(2)
+trucks = [truck_0, truck_1, truck_2]
 
-# Distribute packages into trucks using the Distributor class
-distributor = Distributor([truck_0, truck_1, truck_2])
-distributor.distribute_packages(packages, grouped_packages)
-simulation_states = precompute_simulation_states(packages, [
-    truck_manager.get_truck(0),
-    truck_manager.get_truck(1),
-    truck_manager.get_truck(2)
-    ]
-)
+simulation_states = precompute_simulation_states(packages, trucks, grouped_packages, delivery_order)
 
 # Initialize and run the UI
 def main():

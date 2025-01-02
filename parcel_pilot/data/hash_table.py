@@ -17,6 +17,9 @@ class HashTable:
         return sum(ord(char) for char in key) % self.size
     
     def _grow(self):
+        """
+        Resizes the hash table by increasing its size by about 50%.
+        """
         new_size = self.size * 2 // 4 * 3
         new_table = [None] * new_size
         for bucket in self.table:
@@ -102,13 +105,3 @@ class HashTable:
                 if self.count / self.size < 0.5:  # Load factor threshold to trigger the hash table's resize method for self-adjustment
                     self._shrink()
                 return
-
-# # Example usage
-# if __name__ == "__main__":
-#     hash_table = HashTable()
-#     hash_table.insert("1", "123 Main St", "10:30 AM", "Cityville", "12345", "5 lbs", "at the hub")
-#     hash_table.insert("2", "456 Elm St", "12:00 PM", "Townsville", "67890", "10 lbs", "en route")
-#     print(hash_table.get("1"))
-#     print(hash_table.get("2"))
-#     hash_table.remove("1")
-#     print(hash_table.get("1"))

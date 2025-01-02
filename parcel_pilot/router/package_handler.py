@@ -5,26 +5,28 @@ from helpers import convert_to_24_hour_format
 def intake_packages(packages, time):
     # Update the location of the packages based on the current time
     for package in packages:
-        # Case 1: Package is delayed
-        if package.notes.startswith('Delayed on flight'):
-            # Delayed packages have no location until they arrive at the hub
-            match = re.search(r'Delayed on flight---will not arrive to depot until (\d{1,2}:\d{2} [APap][Mm])', package.notes)
-            if match:
-                note_time = match.group(1)
-                arrival_time = convert_to_24_hour_format(note_time)
-                if time < arrival_time:
-                    package.location = None  # Delayed packages have no location
-                    package.status = f"IN TRANSIT - EXPECTED AT {arrival_time}"
+        if package.truck_id is None:
+            # Case 1: Package is delayed
+            if package.notes.startswith('Delayed'):
+                # Delayed packages have no location until they arrive at the hub
+                match = re.search(r'Delayed on flight---will not arrive to depot until (\d{1,2}:\d{2} [APap][Mm])', package.notes)
+                if match:
+                    note_time = match.group(1)
+                    arrival_time = convert_to_24_hour_format(note_time)
+                    if time < arrival_time:
+                        package.location = None  # Delayed packages have no location
+                        package.status = f"IN TRANSIT - EXPECTED AT {arrival_time}"
+                        package.arrival_time = arrival_time
+                    else:
+                        package.location = 0
+                        package.status = "AT DESTINATION HUB"
                 else:
-                    package.location = 0
-                    package.status = "AT DESTINATION HUB"
+                    package.location = None  # Delayed packages have no location
+                    package.status = "IN TRANSIT - DELAYED"
+            # Case 2: Package is already at the hub
             else:
-                package.location = None  # Delayed packages have no location
-                package.status = "IN TRANSIT - DELAYED"
-        # Case 2: Package is already at the hub
-        else:
-            package.location = 0  # Default to the hub location
-            package.status = "AT DESTINATION HUB"
+                package.location = 0  # Default to the hub location
+                package.status = "AT DESTINATION HUB"
     return packages
 
 def prioritize_packages(packages):

@@ -1,4 +1,7 @@
 from datetime import datetime, timedelta
+from router.distributor import Distributor
+from data.trucks import TruckManager
+from router.package_handler import intake_packages, prioritize_packages
 
 def calculate_time(minutes_after_8am):
     """
@@ -66,7 +69,7 @@ def generate_time_list():
     
     return time_list
 
-def precompute_simulation_states(packages, trucks):
+def precompute_simulation_states(packages, trucks, grouped_packages, delivery_order):
     """
     Precomputes the states of all packages and trucks at each time from 08:00 to 17:00.
     
@@ -79,10 +82,26 @@ def precompute_simulation_states(packages, trucks):
     """
     time_list = generate_time_list()
     simulation_states = {}
+
+    # Distribute packages into the trucks using the Distributor class
+    distributor = Distributor(trucks)
     
+    # Simulate the state of packages and trucks at the given times
     for time in time_list:
-        # Simulate the state of packages and trucks at the given time
-        # This is a placeholder for the actual simulation logic
+        print(f"Time: {time}")
+        # Iterate through the packages and get the next flight time
+        next_flight_time = None
+        arrival_times = []
+        late_packages = 0
+        intake_packages(packages, time)
+        prioritize_packages(packages)
+        for package in packages:
+            if package.arrival_time and package.arrival_time > time: 
+                arrival_times.append(package.arrival_time)
+        if arrival_times:
+            next_flight_time = min(arrival_times)
+            late_packages = len([time for time in arrival_times if time == next_flight_time])
+        distributor.distribute_packages(packages, grouped_packages, delivery_order, time, next_flight_time, late_packages)
         simulation_states[time] = {
             "packages": packages,
             "trucks": trucks

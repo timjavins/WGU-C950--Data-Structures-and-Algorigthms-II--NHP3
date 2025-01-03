@@ -21,6 +21,7 @@ class Truck:
         self.distance_to_destination = 0.0
         self.total_distance = 0.0
         self.travel_log = []
+        self.route = []
 
     def add_package(self, package):
         if len(self.packages) < self.MAX_CAPACITY:
@@ -28,6 +29,10 @@ class Truck:
             package.truck_id = self.truck_id
         else:
             raise ValueError(f"Truck {self.truck_id} is at full capacity")
+
+    def remove_package(self, package, current_time):
+        package.status = f"DELIVERED at {current_time}"
+        self.packages.remove(package)
 
     def set_destination(self, destination, distance):
         self.destination = destination
@@ -48,6 +53,11 @@ class Truck:
             self.distance_from_last_location = 0.0
             self.destination = None
             self.distance_to_destination = 0.0
+            # Check all the packages on the truck to deliver the proper package(s)
+            for package in self.packages:
+                if package.destination == self.current_location:
+                    self.remove_package(package, current_time)
+
 
             # Log the location and time of arrival
             self.travel_log.append((self.current_location, current_time))

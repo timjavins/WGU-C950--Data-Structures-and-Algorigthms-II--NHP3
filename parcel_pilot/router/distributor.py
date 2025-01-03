@@ -8,8 +8,13 @@ class Distributor:
         self.late_packages = 0
         self.time_constraint = 0
         self.distance_constraint = 0
+        self.trucks.pop(0) # Ignore truck 0 since there are only two drivers
 
     def distribute_packages(self, packages, grouped_packages, delivery_order, time_string, next_flight_time, late_packages):
+        # Late packages is the number of packages arriving on the next flight
+        # If no trucks are at location 0, stop
+        if not any(truck.current_location == 0 for truck in self.trucks):
+            return
         print(f"Time: {time_string}")
         print(f"Next flight time: {next_flight_time}")
         print(f"Late packages: {late_packages}")
@@ -29,7 +34,15 @@ class Distributor:
         for priority in range(1, highest_priority_number + 1):
             for package in packages:
                 if package.priority == priority:
+                    # read its destination
+                    destination = package.destination
+                    # read its group
+                    group = package.group
                     self.load_package(package)
+                # Find other packages with the same destination
+                for package in packages:
+                    if package.destination == destination:
+                        self.load_package(package)
 
         # Load priority 0 packages last
         for package in packages:
@@ -48,7 +61,7 @@ class Distributor:
                 if len(truck.packages) < Truck.MAX_CAPACITY:
                     truck.add_package(package)
             else:
-                # Since there are only two drivers, ignore truck[0] and load the package into the first available truck with capacity
+                # Load the package into the first available truck with capacity
                 for truck in [self.trucks[1], self.trucks[2]]:
                     if len(truck.packages) < Truck.MAX_CAPACITY:
                         truck.add_package(package)

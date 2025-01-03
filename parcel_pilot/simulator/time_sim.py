@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from router.distributor import Distributor
 from data.trucks import TruckManager
 from router.package_handler import intake_packages, prioritize_packages
+from simulator.minutes import Minute
 
 def calculate_time(minutes_after_8am):
     """
@@ -78,7 +79,7 @@ def precompute_simulation_states(packages, trucks, grouped_packages, delivery_or
     trucks (list): The list of trucks.
     
     Returns:
-    dict: A dictionary where keys are times in 24-hour format (HH:MM) and values are the states of packages and trucks.
+    dict: A dictionary where keys are times in 24-hour format (HH:MM) and values are Minute objects.
     """
     time_list = generate_time_list()
     simulation_states = {}
@@ -102,9 +103,8 @@ def precompute_simulation_states(packages, trucks, grouped_packages, delivery_or
             next_flight_time = min(arrival_times)
             late_packages = len([time for time in arrival_times if time == next_flight_time])
         distributor.distribute_packages(packages, grouped_packages, delivery_order, time, next_flight_time, late_packages)
-        simulation_states[time] = {
-            "packages": packages,
-            "trucks": trucks
-        }
+        
+        # Create a Minute object and store it in the simulation_states dictionary
+        simulation_states[time] = Minute(time, packages.copy(), trucks.copy())
     
     return simulation_states

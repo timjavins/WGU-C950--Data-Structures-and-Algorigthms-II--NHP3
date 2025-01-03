@@ -14,9 +14,12 @@ class Package:
         self.location = None
         self.group = None
         self.arrival_time = None
+        self.destination = None
+        self.delivery_time = None
 
     def __str__(self): # The __str__ method is useful for debugging and logging.
         return (f"Package ID: {self.pid}, Address: {self.address}, City: {self.city}, State: {self.state}, "
                 f"ZIP: {self.zip_code}, Deadline: {self.deadline}, Weight: {self.weight}, "
                 f"Notes: {self.notes}, Status: {self.status}, Priority: {self.priority},"
-                f"Truck ID: {self.truck_id}, Location: {self.location}, Group: {self.group}, Arrival Time: {self.arrival_time}")
+                f"Truck ID: {self.truck_id}, Location: {self.location}, Group: {self.group},"
+                f"Arrival Time: {self.arrival_time}, Destination: {self.destination}, Delivery Time: {self.delivery_time}")

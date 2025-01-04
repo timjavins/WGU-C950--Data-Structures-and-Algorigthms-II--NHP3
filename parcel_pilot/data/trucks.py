@@ -22,6 +22,8 @@ class Truck:
         self.total_distance = 0.0
         self.travel_log = []
         self.route = []
+        self.minutes = 0
+        self.mile_marker = 0
 
     def add_package(self, package):
         if len(self.packages) < self.MAX_CAPACITY:
@@ -30,8 +32,7 @@ class Truck:
         else:
             raise ValueError(f"Truck {self.truck_id} is at full capacity")
 
-    def remove_package(self, package, current_time):
-        package.status = f"DELIVERED at {current_time}"
+    def remove_package(self, package):
         self.packages.remove(package)
 
     def set_destination(self, destination, distance):
@@ -39,13 +40,10 @@ class Truck:
         self.distance_to_destination = distance
 
     def update_position(self, current_time, map_locations):
-        # Calculate the distance traveled based on the time elapsed
-        time_elapsed = (current_time - self.start_time).total_seconds() / 60.0  # Convert to minutes
-        distance_traveled = time_elapsed * 0.3  # Distance traveled in miles
-
+        self.minutes += 1 # Increment the time spent on the road, expecting position updates to be exactly once per minute.
+        distance_traveled = self.minutes * 0.3  # Trip distance traveled in miles per minute
         # Update the truck's position
-        self.distance_from_last_location += distance_traveled
-        self.total_distance += distance_traveled
+        self.distance_from_last_location = distance_traveled - self.mile_marker
 
         # Check if the truck has reached the destination
         if self.distance_from_last_location >= self.distance_to_destination:
@@ -56,8 +54,10 @@ class Truck:
             # Check all the packages on the truck to deliver the proper package(s)
             for package in self.packages:
                 if package.destination == self.current_location:
-                    self.remove_package(package, current_time)
-
-
+                    package.status = f"DELIVERED AT {current_time}"
+                    package.delivery_time = current_time
+                    self.remove_package(package)
             # Log the location and time of arrival
             self.travel_log.append((self.current_location, current_time))
+        if self.current_location == 0:
+            self.minutes = 0

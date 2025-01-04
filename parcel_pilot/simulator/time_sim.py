@@ -70,7 +70,7 @@ def generate_time_list():
     
     return time_list
 
-def precompute_simulation_states(packages, trucks, grouped_packages, delivery_order):
+def precompute_simulation_states(packages, trucks, algo):
     """
     Precomputes the states of all packages and trucks at each time from 08:00 to 17:00.
     
@@ -102,7 +102,7 @@ def precompute_simulation_states(packages, trucks, grouped_packages, delivery_or
         if arrival_times:
             next_flight_time = min(arrival_times)
             late_packages = len([time for time in arrival_times if time == next_flight_time])
-        distributor.distribute_packages(packages, grouped_packages, delivery_order, time, next_flight_time, late_packages)
+        distributor.distribute_packages(packages, time, next_flight_time, late_packages, algo)
         
         # Create a Minute object and store it in the simulation_states dictionary
         simulation_states[time] = Minute(time, packages.copy(), trucks.copy())

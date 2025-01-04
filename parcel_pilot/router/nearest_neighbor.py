@@ -23,7 +23,7 @@ def nearest_neighbor_algorithm(start_location, packages, distances, map_location
     print("Package Addresses:", package_addresses)
     print("")
 
-    # Find the delivery locations in the map locations
+    # Look up the delivery locations in the map_locations_reverse dictionary
     delivery_locations = [find_partial_match(map_locations_reverse, address) for address in package_addresses]
     print("Delivery Locations:", delivery_locations)
     print("")

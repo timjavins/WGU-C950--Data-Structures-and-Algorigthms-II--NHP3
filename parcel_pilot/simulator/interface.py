@@ -1,7 +1,31 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, simpledialog
 from simulator.time_sim import calculate_time, calculate_minutes, precompute_simulation_states
 import re
+
+class ChooseAlgo(simpledialog.Dialog):
+    def body(self, master):
+        tk.Label(master, text="Choose Algorithm").grid(row=0, column=0, columnspan=2)
+        return None
+
+    def buttonbox(self):
+        box = tk.Frame(self)
+
+        self.dijkstra_button = tk.Button(box, text="Dijkstra's", width=10, command=self.use_dijkstra)
+        self.dijkstra_button.grid(row=0, column=0, padx=5, pady=5)
+
+        self.nearest_neighbor_button = tk.Button(box, text="Nearest Neighbor", width=15, command=self.use_nearest_neighbor)
+        self.nearest_neighbor_button.grid(row=0, column=1, padx=5, pady=5)
+
+        box.pack()
+
+    def use_dijkstra(self):
+        self.result = "dijkstra"
+        self.destroy()
+
+    def use_nearest_neighbor(self):
+        self.result = "nearest neighbor"
+        self.destroy()
 
 class InfoDisplayUI:
     def __init__(self, root, time_simulator, packages, trucks):

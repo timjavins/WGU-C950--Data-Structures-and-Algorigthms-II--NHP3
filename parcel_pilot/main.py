@@ -1,9 +1,10 @@
 from data.parser import DataParser
 from router.package_handler import link_packages, group_linked_packages, prioritize_packages, intake_packages
-from simulator.interface import TimeSimulatorUI, InfoDisplayUI, center_window, position_time_simulator, on_closing
+from simulator.interface import ChooseAlgo, TimeSimulatorUI, InfoDisplayUI, center_window, position_time_simulator, on_closing
 from data.trucks import TruckManager
 from router.distributor import Distributor
 import tkinter as tk
+from tkinter import messagebox
 from simulator.time_sim import precompute_simulation_states
 from data.packages import Package
 from router.nearest_neighbor import nearest_neighbor_algorithm
@@ -26,11 +27,16 @@ packages = data_parser.initialize_packages()
 linked_packages = link_packages(packages)
 grouped_packages = group_linked_packages(linked_packages, packages)
 
-# Determine preliminary delivery order
-delivery_order = nearest_neighbor_algorithm(0, packages, distances, map_locations_reverse, map_locations)
+# message box that allows the user to pick between Dijkstra's and Nearest Neighbor
+# Create a custom dialog to choose the algorithm
+mbox = tk.Tk()
+mbox.withdraw()  # Hide the root window
+dialog = ChooseAlgo(mbox)
+algo = dialog.result if dialog.result else "nearest neighbor"
 
+print()
 print("MAIN.PY")
-print("")
+print()
 print("Locations:", map_locations)
 print()
 print("Reverse:", map_locations_reverse)
@@ -53,7 +59,7 @@ truck_1 = truck_manager.get_truck(1)
 truck_2 = truck_manager.get_truck(2)
 trucks = [truck_0, truck_1, truck_2]
 
-simulation_states = precompute_simulation_states(packages, trucks, grouped_packages, delivery_order)
+simulation_states = precompute_simulation_states(packages, trucks, algo)
 
 # Initialize and run the UI
 def main():

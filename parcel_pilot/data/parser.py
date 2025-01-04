@@ -65,5 +65,11 @@ class DataParser:
                     status=package_data[7],
                     notes=package_data[8]
                 )
+                try:
+                    package.destination = self.map_locations_reverse[find_partial_match(self.locations, package.address)]
+                except KeyError:
+                    package.destination = None
+                print(f"Package {package.pid}'s destination is {package.destination}")
                 packages.append(package)
+
         return packages

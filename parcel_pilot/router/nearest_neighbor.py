@@ -1,6 +1,4 @@
-from helpers import find_partial_match
-
-def nearest_neighbor_algorithm(start_location, packages, distances, map_locations_reverse, map_locations):
+def nearest_neighbor_algorithm(start_location, packages, distances):
     """
     Determines the order of package deliveries using the nearest neighbor algorithm.
 
@@ -13,25 +11,10 @@ def nearest_neighbor_algorithm(start_location, packages, distances, map_location
     Returns:
     list: The ordered list of package deliveries.
     """
-    # Filter packages with status "AT DESTINATION HUB"
-    filtered_packages = [package for package in packages if package.status == "AT DESTINATION HUB"]
-
     print("NEAREST NEIGHBOR ALGORITHM")
 
-    # Extract the partial addresses from filtered packages
-    package_addresses = [package.address for package in filtered_packages]
-    print("Package Addresses:", package_addresses)
-    print("")
-
-    # Look up the delivery locations in the map_locations_reverse dictionary
-    delivery_locations = [find_partial_match(map_locations_reverse, address) for address in package_addresses]
-    print("Delivery Locations:", delivery_locations)
-    print("")
-
     # Get the keys of the delivery locations by looking up the corresponding value in the map_locations_reverse dictionary
-    location_keys = [value for key, value in map_locations_reverse.items() if key in delivery_locations]
-    print("Location Keys:", location_keys)
-    print("")
+    location_keys = list(set(package.destination for package in packages))
 
     # Initialize the current location to the start location
     current_location = start_location

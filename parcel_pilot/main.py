@@ -59,15 +59,15 @@ truck_1 = truck_manager.get_truck(1)
 truck_2 = truck_manager.get_truck(2)
 trucks = [truck_0, truck_1, truck_2]
 
-simulation_states = precompute_simulation_states(packages, trucks, algo)
+simulation_states = precompute_simulation_states(packages, trucks, distances, algo)
 
 # Initialize and run the UI
 def main():
     root = tk.Tk() # Create the main window for the InfoDisplayUI
     sub_root = tk.Toplevel() # Create a sub window for the TimeSimulatorUI
-    # Instantiate the user interface components
-    timer = TimeSimulatorUI(sub_root, simulation_states)
-    dashboard = InfoDisplayUI(root, timer, packages, [truck_0, truck_1, truck_2])
+    # Instantiate the main user interface components
+    time_simulator = TimeSimulatorUI(sub_root, simulation_states)
+    dashboard = InfoDisplayUI(root, time_simulator, simulation_states)
     # Center the InfoDisplayUI window
     root.update_idletasks()
     center_window(root, root.winfo_width(), root.winfo_height())

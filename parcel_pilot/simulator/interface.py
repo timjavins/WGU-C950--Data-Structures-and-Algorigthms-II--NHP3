@@ -28,9 +28,10 @@ class ChooseAlgo(simpledialog.Dialog):
         self.destroy()
 
 class InfoDisplayUI:
-    def __init__(self, root, time_simulator, packages, trucks):
+    def __init__(self, root, time_simulator, simulation_states):
         self.root = root
         self.time_simulator = time_simulator
+        self.simulation_states = simulation_states
         self.root.title("Parcel Pilot Dashboard")
 
         # Set the callback mechanism for time updates
@@ -52,11 +53,6 @@ class InfoDisplayUI:
         self.package_tree.heading("Priority", text="Priority")
         self.package_tree.pack()
 
-        # Configure TKinter tags for alternating row colors in package_tree
-        self.package_tree.tag_configure("oddrow", background="#ffffff") # white
-        self.package_tree.tag_configure("evenrow", background="#f0f0ff") # light blue
-
-
         # Truck information display
         self.truck_frame = ttk.Frame(root)
         self.truck_frame.pack(pady=10)
@@ -67,27 +63,13 @@ class InfoDisplayUI:
         self.truck_tree.heading("Miles", text="Miles")
         self.truck_tree.pack()
 
-        # Configure TKinter tags for alternating row colors in truck_tree
+        # Configure TKinter tags for alternating row colors in package_tree and truck_tree
+        self.package_tree.tag_configure("oddrow", background="#ffffff") # white
+        self.package_tree.tag_configure("evenrow", background="#f0f0ff") # light blue
         self.truck_tree.tag_configure("oddrow", background="#ffffff") # white
         self.truck_tree.tag_configure("evenrow", background="#f0f0ff") # light blue
 
-        # Summary information display
-        self.package_frame = ttk.Frame(root)
-        self.package_frame.pack(pady=10)
-        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Location", "Truck", "Group", "Priority"), show="headings")
-        self.package_tree.heading("PID", text="PID")
-        self.package_tree.heading("Status", text="Status")
-        self.package_tree.heading("Location", text="Location")
-        self.package_tree.heading("Truck", text="Truck")
-        self.package_tree.heading("Group", text="Group")
-        self.package_tree.heading("Priority", text="Priority")
-        self.package_tree.pack()
-
         # Populate the information
-        self.populate_package_info(packages)
-        self.populate_truck_info(trucks)
-
-        # Update the time display
         self.update_time()
 
     def update_time(self):
@@ -103,7 +85,7 @@ class InfoDisplayUI:
         Updates the display with the given simulation state.
         
         Parameters:
-        simulation_state (dict): The simulation state containing the states of packages and trucks.
+        simulation_state (Minute): The simulation state containing the states of packages and trucks.
         """
         # Clear the current display
         for item in self.package_tree.get_children():
@@ -111,9 +93,9 @@ class InfoDisplayUI:
         for item in self.truck_tree.get_children():
             self.truck_tree.delete(item)
         # Populate the package information
-        self.populate_package_info(simulation_state["packages"])
+        self.populate_package_info(simulation_state.packages)
         # Populate the truck information
-        self.populate_truck_info(simulation_state["trucks"])
+        self.populate_truck_info(simulation_state.trucks)
 
     def populate_package_info(self, packages):
         for index, package in enumerate(packages):

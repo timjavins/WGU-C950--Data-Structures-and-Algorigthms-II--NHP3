@@ -27,7 +27,6 @@ class Distributor:
         nearest_destinations = nearness(packages, distances) # returns an ordered list of package ids (package.pid)
         # Sort the packages so that they match the order of nearest_destinations
         packages = sorted(packages, key=lambda package: nearest_destinations.index(package.pid))
-        package_ids = ", ".join(package.pid for package in packages)
         self.late_packages = late_packages
         today = datetime.today().date()
         if not next_flight_time:
@@ -37,95 +36,99 @@ class Distributor:
         self.time_constraint = (next_flight_time - time) / timedelta(minutes=1) # Convert to minutes
 
         if self.initializing:
-            # Find the highest priority number
+            # Find the highest priority number -- this only needs to run once
             self.highest_priority_number = max(package.priority for package in packages)
-        
-        # For organizing the packages before loading them into the trucks
-        bucket0 = []
-        bucket1 = []
-        bucket2 = []
-        buckets = [bucket0, bucket1, bucket2]
 
-        # For building the routes for the trucks
-        route0 = []
-        route1 = []
-        route2 = []
-        routes = [route0, route1, route2]
+        # For organizing the packages before loading them into the trucks
+        buckets = {truck.truck_id: [] for truck in self.trucks}
 
         # Load packages by priority rank (1 being the first priority)
         for priority in range(1, self.highest_priority_number + 1):
-            i = 0
+            truck_index = 0
             for package in packages:
                 if package.priority == priority:
-                    destination = package.destination # read its destination
-                    group = package.group # read its group
-                    buckets[i].append(package)
-                    for package in packages:
-                        if package.destination == destination: # Find other packages with the same destination
-                            buckets[i].append(package)
-                        if group and package.group == group: # Find other packages with the same group
-                            buckets[i].append(package)
-            if i == (len(available_trucks) - 1):
-                i = 0
-            else:
-                i += 1
+                    this_package = package
+                    # Check the notes for truck requirements
+                    match = re.search(r'Can only be on truck (\d+)', package.notes)
+                    if match:
+                        truck_id = int(match.group(1))
+                    else:
+                        truck_id = available_trucks[truck_index]
+                    destination = package.destination  # read its destination
+                    group = package.group  # read its group
+                    buckets[truck_id].append(package)
+                    for package in (pkg for pkg in packages if pkg.pid != this_package.pid):  # exclude the current package
+                        if package.destination == destination:  # Find other packages with the same destination
+                            buckets[truck_id].append(package)
+                        if group and package.group == group:  # Find other packages with the same group
+                            buckets[truck_id].append(package)
+                    # Move to the next truck
+                    truck_index = (truck_index + 1) % len(available_trucks)
 
-            # Check the notes for truck requirements
-            # match = re.search(r'Can only be on truck (\d+)', package.notes)
-            # if match:
-            #     truck_id = int(match.group(1))
-            #     truck = self.trucks[truck_id]
-            #     if len(truck.packages) < Truck.MAX_CAPACITY:
-            #         package.truck_id = truck_id
-            #         print(f"Loading package {package.pid} onto truck {truck_id} - {package.truck_id}")
-            #         truck.add_package(package)
+            # buckets = [bucket for bucket in buckets if bucket]
 
         # Load priority 0 packages last
-        i = 0
         for package in packages:
+            truck_index = 0
             if package.notes == "Wrong address listed":
                 # skip this package
                 continue
             if package.priority == 0:
+                this_package = package
+                # Check the notes for truck requirements
+                match = re.search(r'Can only be on truck (\d+)', package.notes)
+                if match:
+                    truck_id = int(match.group(1))
+                else:
+                    truck_id = available_trucks[truck_index]
                 destination = package.destination # read its destination
                 group = package.group # read its group
-                buckets[i].append(package)
-                for package in packages:
+                buckets[truck_id].append(package)
+                for package in (pkg for pkg in packages if pkg.pid != this_package.pid):
                     if package.destination == destination: # Find other packages with the same destination
-                        buckets[i].append(package)
+                        buckets[truck_id].append(package)
                     if group and package.group == group: # Find other packages with the same group
-                        buckets[i].append(package)
-        if i == (len(available_trucks) - 1):
-            i = 0
-        else:
-            i += 1
+                        buckets[truck_id].append(package)
+                # Move to the next truck
+                truck_index = (truck_index + 1) % len(available_trucks)
 
-        # get the routes for each truck
-        i = 0
-        for bucket in buckets:
+        # print the contents of each bucket
+        for truck_id, bucket in buckets.items():
+            print(f"Bucket {truck_id}:")
+            for package in bucket:
+                print(package)
+
+###### TODO: Turn this into a stand-alone function so that we can double-check the route after loading all the packages.
+###### TODO: This will allow for verifying that the route matches the packages loaded onto the truck.
+###### TODO: Justification: If the number of packages on the route was greater than MAX_CAPACITY, the route will be too long.
+        # For building the routes for the trucks
+        routes = {truck.truck_id: None for truck in self.trucks}
+        
+        for truck_id, bucket in buckets.items():
             if bucket:
-                for j in range(1, len(bucket[i]) + 1):
-                    # Create a sublist of bucket[i] that includes elements from the start up to the current index j
-                    sublist = bucket[i][:j]
+                for j in range(1, len(bucket) + 1):
+                    # Create a sublist of bucket that includes elements from the start up to the current index j
+                    sublist = bucket[:j]
                     # Create the destinations_list from the sublist
                     destinations_list = [item.destination for item in sublist]
                     if algo == "dijkstra":
                         route = dijkstra(0, destinations_list, distances)
                     else:
                         route = nearest_neighbor_algorithm(0, destinations_list, distances)
-                    if route[0][1] < self.time_constraint: # Read the total time of the returned route and compare it to the time constraint
-                        routes[i] = route # It will work
+                    if route[0][1] < self.time_constraint:  # Read the total time of the returned route and compare it to the time constraint
+                        routes[truck_id] = route[1]  # It will work (route[0] is meta data while route[1] is the actual route)
+                        continue
                     else:
                         break
-                if routes[i]:
-                    # get all the packages from bucket[i] that match the destinations in the route
-                    packages_to_load = [package for package in bucket[i] if package.destination in [item[0] for item in route]]
+                if routes[truck_id]:
+                    # Get all the packages from the bucket that match the destinations in the route
+                    packages_to_load = [package for package in bucket if package.destination in [item[0] for item in route[1]]]
                     for package in packages_to_load:
-                        self.load_package(package, i)
-                self.trucks[i].set_route(routes[i])
-                self.trucks[i].go()
-            i += 1
-        
+                        self.load_package(package, truck_id)
+                    self.trucks[truck_id].set_route(routes[truck_id])
+                    self.trucks[truck_id].go()
+###### TODO: End of stand-alone function
+
         self.initializing = False
 
     def load_package(self, package, i):

@@ -25,6 +25,9 @@ class Truck:
         self.trip_minutes = 0
         self.mile_marker = 0
 
+    def __str__(self):
+        return f"Truck ID: {self.truck_id}, Current Location: {self.current_location}, Total Distance: {self.total_distance}, Packages: {[pkg.pid for pkg in self.packages]}"
+    
     def add_package(self, package):
         if len(self.packages) < self.MAX_CAPACITY:
             self.packages.append(package)

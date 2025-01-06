@@ -5,7 +5,6 @@ from helpers import convert_to_24_hour_format
 def intake_packages(packages, time):
     # Update the location of the packages based on the current time
     for package in packages:
-        print(f"intake Time: {time}")
         if time == "10:20" and package.pid == 9:
             package.notes = None
             package.address = "410 S State St"
@@ -74,7 +73,6 @@ def link_packages(packages):
             # add the PID to the list of linked packages
             if package.pid not in linked_packages:
                 linked_packages[package.pid] = links
-    print("Linked Packages:", linked_packages)
     return linked_packages
 
 def group_linked_packages(linked_packages, packages):
@@ -105,5 +103,4 @@ def group_linked_packages(linked_packages, packages):
         for package_id in group:
             package_dict[package_id].group = group_key
 
-    print("Linked Package Groups:", groups)
     return groups

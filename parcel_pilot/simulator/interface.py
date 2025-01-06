@@ -206,7 +206,8 @@ class TimeSimulatorUI:
         Returns:
         dict: The simulation state for the given time.
         """
-        return self.simulation_states.get(time_str, None)
+        print(f"Getting {self.simulation_states[time_str]}")
+        return self.simulation_states[time_str]
 
 def center_window(window, width, height):
     screen_width = window.winfo_screenwidth()

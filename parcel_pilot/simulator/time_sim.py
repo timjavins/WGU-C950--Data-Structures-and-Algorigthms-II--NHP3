@@ -102,8 +102,17 @@ def precompute_simulation_states(packages, trucks, distances, algo):
             next_flight_time = min(arrival_times)
             late_packages = len([time for time in arrival_times if time == next_flight_time])
         distributor.distribute_packages(packages, time, next_flight_time, late_packages, distances, algo)
+        # write the state of the packages and trucks to a text file
+        with open("simulation_states.txt", "a") as file:
+            file.write(f"Time: {time}\n")
+            file.write("Packages:\n")
+            for package in packages:
+                file.write(f"{package}\n")
+            file.write("Trucks:\n")
+            for truck in trucks:
+                file.write(f"{truck.truck_id}, {truck.packages}\n")
+            file.write("\n")
         
         # Create a Minute object and store it in the simulation_states dictionary
         simulation_states[time] = Minute(time, packages.copy(), trucks.copy())
-    
     return simulation_states

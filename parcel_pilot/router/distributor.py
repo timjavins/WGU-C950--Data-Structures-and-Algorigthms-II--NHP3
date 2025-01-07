@@ -106,11 +106,11 @@ class Distributor:
         
         for truck_id, bucket in buckets.items():
             if bucket:
-                for j in range(1, len(bucket) + 1):
-                    # Create a sublist of bucket that includes elements from the start up to the current index j
-                    sublist = bucket[:j]
-                    # Create the destinations_list from the sublist
-                    destinations_list = [item.destination for item in sublist]
+                # Create the destinations_list from the sublist. The set() function removes duplicates.
+                destinations_list = list(set(item.destination for item in bucket))
+                for j in range(1, len(destinations_list) + 1):
+                    # Create a sublist of destinations_list that includes from the first element up to index j
+                    sublist = destinations_list[:j]
                     if algo == "dijkstra":
                         route = dijkstra(0, destinations_list, distances)
                     else:
@@ -121,8 +121,8 @@ class Distributor:
                     else:
                         break
                 if routes[truck_id]:
-                    # Get all the packages from the bucket that match the destinations in the route
-                    packages_to_load = [package for package in bucket if package.destination in [item[0] for item in route[1]]]
+                    # Get all the packages from the bucket that match any destination in the route
+                    packages_to_load = [package for package in bucket if package.destination in [dest[0] for dest in routes[truck_id]]]
                     for package in packages_to_load:
                         self.load_package(package, truck_id)
                     self.trucks[truck_id].set_route(routes[truck_id])

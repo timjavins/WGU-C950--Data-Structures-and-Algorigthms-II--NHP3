@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from router.distributor import Distributor
-from data.trucks import TruckManager
+from data.trucks import TruckManager, Truck
 from router.package_handler import intake_packages, prioritize_packages
 from simulator.minutes import Minute
 
@@ -102,6 +102,8 @@ def precompute_simulation_states(packages, trucks, distances, algo):
             next_flight_time = min(arrival_times)
             late_packages = len([time for time in arrival_times if time == next_flight_time])
         distributor.distribute_packages(packages, time, next_flight_time, late_packages, distances, algo)
+        for truck in trucks:
+            truck.update_position(time)
         # write the state of the packages and trucks to a text file
         with open("simulation_states.txt", "a") as file:
             file.write(f"Time: {time}\n")

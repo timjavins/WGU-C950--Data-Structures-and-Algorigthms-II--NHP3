@@ -34,22 +34,6 @@ mbox.withdraw()  # Hide the root window
 dialog = ChooseAlgo(mbox)
 algo = dialog.result if dialog.result else "nearest neighbor"
 
-# print()
-# print("MAIN.PY")
-# print()
-# print("Locations:", map_locations)
-# print()
-# print("Reverse:", map_locations_reverse)
-# print()
-# print("Packages:")
-# for package in packages:
-#     print(package)
-# print()
-# print("Distances:", distances)
-# print()
-# print("Grouped Packages:", grouped_packages)
-# print()
-
 # Create a TruckManager instance
 truck_manager = TruckManager()
 

@@ -4,15 +4,18 @@ from helpers import convert_to_24_hour_format
 
 def intake_packages(packages, time):
     # Update the location of the packages based on the current time
+    print(f"Intaking packages at {time}")
     for package in packages:
-        if time == "10:20" and package.pid == 9:
+        if package.pid == 9 and time == "10:20 AM":
             package.notes = None
             package.address = "410 S State St"
             package.city = "Salt Lake City"
             package.state = "UT"
             package.zip_code = "84111"
             package.destination = 19
-            print(f"Package {package.pid} updated to {package.address}, {package.city}, {package.state} {package.zip_code}")
+            with open("simulation_states.txt", "a") as file:
+                file.write(f"Time: {time}\n")
+                file.write(f"Package {package.pid} updated to {package.address}, {package.city}, {package.state} {package.zip_code}\n")
         if package.truck_id is None:
             # Case 1: Package is delayed
             if package.notes.startswith('Delayed'):

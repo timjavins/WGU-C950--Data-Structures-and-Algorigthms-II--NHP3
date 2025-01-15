@@ -74,6 +74,7 @@ class InfoDisplayUI:
 
     def update_time(self):
         if not self.time_simulator.is_editing: # This should not run when the user is editing the time input
+            simulation_state = None
             current_time = self.time_simulator.get_current_time()
             self.time_label.config(text=f"Current Time: {current_time}")
             simulation_state = self.time_simulator.get_simulation_state(current_time)

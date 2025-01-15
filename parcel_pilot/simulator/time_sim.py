@@ -107,12 +107,13 @@ def precompute_simulation_states(packages, trucks, distances, algo):
         # write the state of the packages and trucks to a text file
         with open("simulation_states.txt", "a") as file:
             file.write(f"Time: {time}\n")
-            file.write("Packages:\n")
-            for package in packages:
-                file.write(f"{package}\n")
             file.write("Trucks:\n")
             for truck in trucks:
-                file.write(f"{truck.truck_id}, {truck.packages}\n")
+                package_ids = [package.pid for package in truck.packages]
+                file.write(f"Truck ID: {truck.truck_id}, Packages: {package_ids}\n")
+                file.write(f"Current Location: {truck.current_location}, Mile Marker: {truck.mile_marker}, Trip Minutes: {truck.trip_minutes}\n")
+                file.write(f"Log: {truck.travel_log}\n")
+                file.write(f"Route: {truck.route}\n")
             file.write("\n")
         
         # Create a Minute object and store it in the simulation_states dictionary

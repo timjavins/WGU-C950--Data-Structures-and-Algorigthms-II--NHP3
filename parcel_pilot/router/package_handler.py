@@ -4,10 +4,9 @@ from helpers import convert_to_24_hour_format
 
 def intake_packages(packages, time):
     # Update the location of the packages based on the current time
-    print(f"Intaking packages at {time}")
     for package in packages:
-        if package.pid == 9 and time == "10:20 AM":
-            package.notes = None
+        if package.pid == "9" and time == "10:20":
+            package.notes = ""
             package.address = "410 S State St"
             package.city = "Salt Lake City"
             package.state = "UT"
@@ -17,6 +16,8 @@ def intake_packages(packages, time):
                 file.write(f"Time: {time}\n")
                 file.write(f"Package {package.pid} updated to {package.address}, {package.city}, {package.state} {package.zip_code}\n")
         if package.truck_id is None:
+            if package.notes.startswith('Wrong address listed'):
+                continue
             # Case 1: Package is delayed
             if package.notes.startswith('Delayed'):
                 # Delayed packages have no location until they arrive at the hub

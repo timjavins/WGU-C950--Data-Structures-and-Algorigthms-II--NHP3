@@ -48,34 +48,40 @@ class Truck:
                 for package in self.packages:
                     package.location = -1
                     package.status = "OUT FOR DELIVERY"
-            self.destination = self.route[0][0]
-            self.distance_to_destination = self.route[0][1]
-            self.route.pop(0)
+            self.destination = self.route[0][0] # The destination is the first element in the tuple
+            self.distance_to_destination = self.route[0][1] # The distance to the destination is the second element in the tuple
 
     def update_position(self, current_time):
         if self.route:
-            self.trip_minutes += 1 # Increment the time spent on the road, expecting position updates to be exactly once per minute.
+            self.trip_minutes += 1  # Increment the time spent on the road, expecting position updates to be exactly once per minute.
             distance_traveled = self.trip_minutes * 0.3  # Trip distance traveled in miles per minute
             # Update the truck's position
             self.distance_from_last_location = distance_traveled - self.mile_marker
-
+    
             # Check if the truck has reached the destination
             if self.distance_from_last_location >= self.distance_to_destination:
+                self.route.pop(0)
                 self.current_location = self.destination
                 self.distance_from_last_location = 0.0
-                self.destination = None
                 self.distance_to_destination = 0.0
                 self.total_distance += self.distance_from_last_location
                 self.mile_marker = distance_traveled
+                # Create a list of packages to be removed
+                packages_to_remove = []
                 # Check all the packages on the truck to deliver the proper package(s)
                 for package in self.packages:
                     if package.destination == self.current_location:
                         package.status = f"DELIVERED AT {current_time}"
                         package.delivery_time = current_time
                         package.location = self.current_location
-                        self.remove_package(package)
+                        packages_to_remove.append(package)
+                        with open("simulation_states.txt", "a") as file:
+                            file.write(f"Package {package.pid} delivered at {current_time} (Deadline was {package.deadline})\n")
+                # Remove the packages after the iteration to avoid modifying the list while iterating and skipping packages
+                for package in packages_to_remove:
+                    self.remove_package(package)
                 # Log the location and time of arrival
                 self.travel_log.append((self.current_location, current_time))
                 self.go()
-            if self.current_location == 0:
+            if self.current_location == 0 and not self.route:
                 self.trip_minutes = 0

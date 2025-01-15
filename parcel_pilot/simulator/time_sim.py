@@ -3,6 +3,7 @@ from router.distributor import Distributor
 from data.trucks import TruckManager, Truck
 from router.package_handler import intake_packages, prioritize_packages
 from simulator.minutes import Minute
+import copy
 
 def calculate_time(minutes_after_8am):
     """
@@ -70,7 +71,7 @@ def generate_time_list():
     
     return time_list
 
-def precompute_simulation_states(packages, trucks, distances, algo):
+def precompute_simulation_states(all_packages, trucks, distances, algo):
     """
     Precomputes the states of all packages and trucks at each time from 08:00 to 17:00.
     
@@ -83,7 +84,7 @@ def precompute_simulation_states(packages, trucks, distances, algo):
     """
     time_list = generate_time_list()
     simulation_states = {}
-    prioritize_packages(packages)
+    packages = prioritize_packages(all_packages)
 
     # Distribute packages into the trucks using the Distributor class
     distributor = Distributor(trucks)
@@ -115,7 +116,8 @@ def precompute_simulation_states(packages, trucks, distances, algo):
                 file.write(f"Log: {truck.travel_log}\n")
                 file.write(f"Route: {truck.route}\n")
             file.write("\n")
-        
+        packages_copy = copy.deepcopy(packages)
+        trucks_copy = copy.deepcopy(trucks)
         # Create a Minute object and store it in the simulation_states dictionary
-        simulation_states[time] = Minute(time, packages.copy(), trucks.copy())
+        simulation_states[time] = Minute(time, packages_copy, trucks_copy)
     return simulation_states

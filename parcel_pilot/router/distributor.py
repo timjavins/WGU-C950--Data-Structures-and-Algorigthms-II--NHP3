@@ -15,17 +15,30 @@ class Distributor:
         self.initializing = True
         self.highest_priority_number = 0
         self.buckets = {truck.truck_id: [] for truck in self.trucks}
+        self.loaded_packages = set() # Track which packages were already added to buckets to avoid duplicates
+        self.packages = set() # To track which packages have not yet been distributed
 
     def distribute_packages(self, all_packages, time_string, next_flight_time, late_packages, distances, algo):
+        with open("distributor packages.txt", "a") as file:
+            file.write(f"Package objects at {time_string}: {all_packages}\n")
         # Late packages is the number of packages arriving on the next flight
 
-        added_packages = set()  # Track which packages were already added to buckets to avoid duplicates
+        if self.initializing:
+            self.packages = sorted(set(package.pid for package in all_packages))
+            # Find the highest priority number -- this only needs to run once
+            self.highest_priority_number = max(package.priority for package in all_packages)
+            with open("distributor packages.txt", "w") as file:
+                file.write(f"Initial Distributor Packages: {self.packages}\n")
         
         # If no trucks are at location 0, stop
         available_trucks = [truck.truck_id for truck in self.trucks if truck.current_location == 0]
         if not available_trucks:
             return
-        packages = [package for package in all_packages if package.truck_id is None and package.location == 0 and package.destination]
+        packages = [package for package in all_packages if 
+                    package.truck_id is None and 
+                    package.location == 0 and 
+                    package.destination and
+                    package.pid in self.packages]
         if not packages:
             return
         nearest_destinations = nearness(packages, distances) # returns an ordered list of package ids (package.pid)
@@ -38,17 +51,18 @@ class Distributor:
         time = datetime.combine(today, datetime.strptime(time_string, "%H:%M").time())
         next_flight_time = datetime.combine(today, datetime.strptime(next_flight_time, "%H:%M").time())
         self.time_constraint = (next_flight_time - time) / timedelta(minutes=1) # Convert to minutes
-
-        if self.initializing:
-            # Find the highest priority number -- this only needs to run once
-            self.highest_priority_number = max(package.priority for package in packages)
-
+    
+    
         
         # Load packages by priority rank (1 being the first priority)
         for priority in range(1, self.highest_priority_number + 1):
             truck_index = 0
             for package in packages:
-                if package.priority == priority and package.pid not in added_packages:
+                # If the package.pid is not in self.packages, remove it from the list
+                if package.pid not in self.packages:
+                    packages.remove(package)
+                    continue
+                if package.priority == priority and package.pid not in self.loaded_packages and package.pid in self.packages:
                     this_package = package
                     # Check the notes for truck requirements
                     match = re.search(r'Can only be on truck (\d+)', package.notes)
@@ -59,25 +73,29 @@ class Distributor:
                     destination = package.destination  # read its destination
                     group = package.group  # read its group
                     self.buckets[truck_id].append(package)
-                    added_packages.add(package.pid)  # Mark package as added
+                    self.loaded_packages.add(package.pid)  # Mark package as added
                     for pkg in packages:
-                        if pkg.pid != this_package.pid and pkg.pid not in added_packages:
+                        if pkg.pid != this_package.pid and pkg.pid not in self.loaded_packages:
                             if pkg.destination == destination:  # Find other packages with the same destination
                                 self.buckets[truck_id].append(pkg)
-                                added_packages.add(pkg.pid)  # Mark package as added
+                                self.loaded_packages.add(pkg.pid)  # Mark package as added
                             elif group and pkg.group == group:  # Find other packages with the same group
                                 self.buckets[truck_id].append(pkg)
-                                added_packages.add(pkg.pid)  # Mark package as added
+                                self.loaded_packages.add(pkg.pid)  # Mark package as added
                     # Move to the next truck, alternating between indexes 0 and 1
                     truck_index = (truck_index + 1) % len(available_trucks)
         
         # Load priority 0 packages last
         for package in packages:
             truck_index = 0
+            # If the package.pid is not in self.packages, remove it from the list
+            if package.pid not in self.packages:
+                packages.remove(package)
+                continue
             if package.notes == "Wrong address listed":
                 # skip this package
                 continue
-            if package.priority == 0 and package.pid not in added_packages:
+            if package.priority == 0 and package.pid not in self.loaded_packages and package.pid in self.packages:
                 this_package = package
                 # Check the notes for truck requirements
                 match = re.search(r'Can only be on truck (\d+)', package.notes)
@@ -88,28 +106,28 @@ class Distributor:
                 destination = package.destination  # read its destination
                 group = package.group  # read its group
                 self.buckets[truck_id].append(package)
-                added_packages.add(package.pid)  # Mark package as added
+                self.loaded_packages.add(package.pid)  # Mark package as added
                 for pkg in packages:
-                    if pkg.pid != this_package.pid and pkg.pid not in added_packages:
+                    if pkg.pid != this_package.pid and pkg.pid not in self.loaded_packages:
                         if pkg.destination == destination:  # Find other packages with the same destination
                             self.buckets[truck_id].append(pkg)
-                            added_packages.add(pkg.pid)  # Mark package as added
+                            self.loaded_packages.add(pkg.pid)  # Mark package as added
                         elif group and pkg.group == group:  # Find other packages with the same group
                             self.buckets[truck_id].append(pkg)
-                            added_packages.add(pkg.pid)  # Mark package as added
+                            self.loaded_packages.add(pkg.pid)  # Mark package as added
                 # Move to the next truck, alternating between indexes 0 and 1
                 truck_index = (truck_index + 1) % len(available_trucks)
-
+    
         # print the contents of each bucket
         for truck_id, bucket in self.buckets.items():
             with open("simulation_states.txt", "a") as file:
                 file.write(f"Truck {truck_id} bucket:\n")
                 for package in bucket:
                     file.write(f"Package {package.pid} - {package.destination}\n")
-
-###### TODO: Turn this into a stand-alone function so that we can double-check the route after loading all the packages.
-###### TODO: This will allow for verifying that the route matches the packages loaded onto the truck.
-###### TODO: Justification: If the number of packages on the route was greater than MAX_CAPACITY, the route will be too long.
+    
+    ###### TODO: Turn this into a stand-alone function so that we can double-check the route after loading all the packages.
+    ###### TODO: This will allow for verifying that the route matches the packages loaded onto the truck.
+    ###### TODO: Justification: If the number of packages on the route was greater than MAX_CAPACITY, the route will be too long.
         # For building the routes for the trucks
         routes = {truck.truck_id: None for truck in self.trucks}
         
@@ -142,7 +160,12 @@ class Distributor:
 
     def load_package(self, package, i):
         if len(self.trucks[i].packages) < Truck.MAX_CAPACITY:
+            try:
+                self.packages.remove(package.pid)
+            except:
+                return
             package.truck_id = self.trucks[i].truck_id
-            with open("simulation_states.txt", "a") as file:
+            with open("distributor packages.txt", "a") as file:
                 file.write(f"Loading package {package.pid} onto truck {self.trucks[i].truck_id} - {package.truck_id}, Destination {package.destination}\n")
+                file.write(f"Distributor Packages: {self.packages}\n")
             self.trucks[i].add_package(package)

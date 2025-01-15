@@ -39,6 +39,10 @@ def intake_packages(packages, time):
             else:
                 package.location = 0  # Default to the hub location
                 package.status = "AT DESTINATION HUB"
+    with open("intake packages.txt", "a") as file:
+        file.write(f"Time: {time}\n")
+        for package in packages:
+            file.write(f"Package {package} with PID {package.pid} - {package.status}\n")
     return packages
 
 def prioritize_packages(packages):

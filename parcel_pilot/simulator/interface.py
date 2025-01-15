@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox, simpledialog, font
 from simulator.time_sim import calculate_time, calculate_minutes, precompute_simulation_states
 import re
 
@@ -43,25 +43,28 @@ class InfoDisplayUI:
 
         # Package information display
         self.package_frame = ttk.Frame(root)
-        self.package_frame.pack(pady=10)
-        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Location", "Truck", "Group", "Priority"), show="headings")
+        self.package_frame.pack(fill='both', expand=True)
+        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Delivery Time", "Deadline", "Group", "Priority", "Location", "Truck", "Notes"), show="headings")
         self.package_tree.heading("PID", text="PID")
         self.package_tree.heading("Status", text="Status")
-        self.package_tree.heading("Location", text="Location")
-        self.package_tree.heading("Truck", text="Truck")
+        self.package_tree.heading("Delivery Time", text="Delivery Time")
+        self.package_tree.heading("Deadline", text="Deadline")
         self.package_tree.heading("Group", text="Group")
         self.package_tree.heading("Priority", text="Priority")
-        self.package_tree.pack()
-
+        self.package_tree.heading("Location", text="Location")
+        self.package_tree.heading("Truck", text="Truck")
+        self.package_tree.heading("Notes", text="Notes")
+        self.package_tree.pack(fill='both', expand=True)
+        
         # Truck information display
         self.truck_frame = ttk.Frame(root)
-        self.truck_frame.pack(pady=10)
+        self.truck_frame.pack(fill='both', expand=True)
         self.truck_tree = ttk.Treeview(self.truck_frame, columns=("Truck ID", "Packages", "Location", "Miles"), show="headings")
         self.truck_tree.heading("Truck ID", text="Truck ID")
         self.truck_tree.heading("Packages", text="Packages")
         self.truck_tree.heading("Location", text="Location")
         self.truck_tree.heading("Miles", text="Miles")
-        self.truck_tree.pack()
+        self.truck_tree.pack(fill='both', expand=True)
 
         # Configure TKinter tags for alternating row colors in package_tree and truck_tree
         self.package_tree.tag_configure("oddrow", background="#ffffff") # white
@@ -97,6 +100,9 @@ class InfoDisplayUI:
         self.populate_package_info(simulation_state.packages)
         # Populate the truck information
         self.populate_truck_info(simulation_state.trucks)
+        # Adjust column widths to fit content
+        self.adjust_column_widths(self.package_tree)
+        self.adjust_column_widths(self.truck_tree)
 
     def populate_package_info(self, packages):
         for index, package in enumerate(packages):
@@ -107,10 +113,13 @@ class InfoDisplayUI:
                 values=(
                     package.pid,
                     package.status,
+                    package.deadline,
+                    package.delivery_time,
+                    package.group,
+                    package.priority,
                     package.location,
                     package.truck_id,
-                    package.group,
-                    package.priority
+                    package.notes
                     ),
                 tags=(tag,)
             )
@@ -130,6 +139,14 @@ class InfoDisplayUI:
                 ),
                 tags=(tag,)
             )
+
+    def adjust_column_widths(self, tree):
+        for col in tree["columns"]:
+            max_width = font.Font().measure(col)
+            for item in tree.get_children():
+                item_text = tree.item(item, "values")[tree["columns"].index(col)]
+                max_width = max(max_width, font.Font().measure(item_text))
+            tree.column(col, width=max_width)
 
 class TimeSimulatorUI:
     def __init__(self, root, simulation_states):
@@ -207,7 +224,6 @@ class TimeSimulatorUI:
         Returns:
         dict: The simulation state for the given time.
         """
-        print(f"Getting {self.simulation_states[time_str]}")
         return self.simulation_states[time_str]
 
 def center_window(window, width, height):

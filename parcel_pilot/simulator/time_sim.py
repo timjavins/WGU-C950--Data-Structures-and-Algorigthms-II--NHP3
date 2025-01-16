@@ -95,14 +95,15 @@ def precompute_simulation_states(all_packages, trucks, distances, algo):
         next_flight_time = None
         arrival_times = []
         late_packages = 0
-        intake_packages(packages, time)
-        for package in packages:
-            if package.arrival_time and package.arrival_time > time: 
-                arrival_times.append(package.arrival_time)
+        pkgs = [pkg for pkg in packages if pkg.truck_id is None]
+        intake_packages(pkgs, time)
+        for pkg in pkgs:
+            if pkg.arrival_time and pkg.arrival_time > time: 
+                arrival_times.append(pkg.arrival_time)
         if arrival_times:
             next_flight_time = min(arrival_times)
             late_packages = len([time for time in arrival_times if time == next_flight_time])
-        distributor.distribute_packages(packages, time, next_flight_time, late_packages, distances, algo)
+        distributor.distribute_packages(pkgs, time, next_flight_time, late_packages, distances, algo)
         for truck in trucks:
             truck.update_position(time)
         # write the state of the packages and trucks to a text file

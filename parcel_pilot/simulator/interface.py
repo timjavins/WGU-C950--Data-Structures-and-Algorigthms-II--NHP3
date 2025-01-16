@@ -113,8 +113,8 @@ class InfoDisplayUI:
                 values=(
                     package.pid,
                     package.status,
-                    package.deadline,
                     package.delivery_time,
+                    package.deadline,
                     package.group,
                     package.priority,
                     package.location,

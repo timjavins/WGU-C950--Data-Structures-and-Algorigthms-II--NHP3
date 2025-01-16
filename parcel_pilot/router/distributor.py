@@ -25,6 +25,8 @@ class Distributor:
 
         if self.initializing:
             self.packages = sorted(set(package.pid for package in all_packages))
+            for package in all_packages:
+                package.original == True
             # Find the highest priority number -- this only needs to run once
             self.highest_priority_number = max(package.priority for package in all_packages)
             with open("distributor packages.txt", "w") as file:
@@ -39,7 +41,11 @@ class Distributor:
                     package.location == 0 and 
                     package.destination and
                     package.pid in self.packages]
-        if not packages:
+        if packages:
+            for package in packages:
+                if not package.original:
+                    packages.remove(package)
+        else:
             return
         nearest_destinations = nearness(packages, distances) # returns an ordered list of package ids (package.pid)
         # Sort the packages so that they match the order of nearest_destinations
@@ -51,12 +57,11 @@ class Distributor:
         time = datetime.combine(today, datetime.strptime(time_string, "%H:%M").time())
         next_flight_time = datetime.combine(today, datetime.strptime(next_flight_time, "%H:%M").time())
         self.time_constraint = (next_flight_time - time) / timedelta(minutes=1) # Convert to minutes
-    
-    
-        
+
         # Load packages by priority rank (1 being the first priority)
         for priority in range(1, self.highest_priority_number + 1):
-            truck_index = 0
+            # Check how many packages are in each bucket. Set truck index to the bucket with the fewest packages
+            truck_index = min(range(len(available_trucks)), key=lambda i: len(self.buckets[available_trucks[i]]))
             for package in packages:
                 # If the package.pid is not in self.packages, remove it from the list
                 if package.pid not in self.packages:
@@ -82,13 +87,13 @@ class Distributor:
                             elif group and pkg.group == group:  # Find other packages with the same group
                                 self.buckets[truck_id].append(pkg)
                                 self.loaded_packages.add(pkg.pid)  # Mark package as added
-                    # Move to the next truck, alternating between indexes 0 and 1
-                    truck_index = (truck_index + 1) % len(available_trucks)
+                truck_index = min(range(len(available_trucks)), key=lambda i: len(self.buckets[available_trucks[i]]))
+
         
         # Load priority 0 packages last
         for package in packages:
-            truck_index = 0
-            # If the package.pid is not in self.packages, remove it from the list
+            # Check how many packages are in each bucket. Set truck index to the bucket with the fewest packages
+            truck_index = min(range(len(available_trucks)), key=lambda i: len(self.buckets[available_trucks[i]]))            # If the package.pid is not in self.packages, remove it from the list
             if package.pid not in self.packages:
                 packages.remove(package)
                 continue
@@ -116,7 +121,7 @@ class Distributor:
                             self.buckets[truck_id].append(pkg)
                             self.loaded_packages.add(pkg.pid)  # Mark package as added
                 # Move to the next truck, alternating between indexes 0 and 1
-                truck_index = (truck_index + 1) % len(available_trucks)
+                truck_index = min(range(len(available_trucks)), key=lambda i: len(self.buckets[available_trucks[i]]))  
     
         # print the contents of each bucket
         for truck_id, bucket in self.buckets.items():
@@ -133,35 +138,77 @@ class Distributor:
         
         for truck_id, bucket in self.buckets.items():
             if bucket:
-                # Create the destinations_list from the sublist.
-                destinations_list = list(set(item.destination for item in bucket)) # The set() function effectively removes duplicates.
-                for j in range(1, len(destinations_list) + 1):
-                    # Create a sublist of destinations_list that includes from the first element up to index j
-                    sublist = destinations_list[:j]
-                    if algo == "dijkstra":
-                        route = dijkstra(0, sublist, distances)
+                # Group destinations by priority levels
+                priority_destinations = {}
+                for package in bucket:
+                    # Handle possible duplicate package objects by making sure the package is in self.packages
+                    if package.pid not in self.packages:
+                        bucket.remove(package)
+                    
+                    if package.priority not in priority_destinations:
+                        priority_destinations[package.priority] = []
+                    priority_destinations[package.priority].append(package.destination)
+
+                if not bucket: # If all the packages were removed from the bucket, move to the next bucket
+                    continue                
+                # Get the top priority level in the bucket, excluding priority 0
+                non_zero_priorities = [package.priority for package in bucket if package.priority != 0]
+                if non_zero_priorities:
+                    top_priority_level = min(non_zero_priorities)
+                else:
+                    top_priority_level = 0  # Default to 0 if no non-zero priorities are found
+                
+                # Determine the initial previous_route_end using the nearness function on the top priority packages
+                top_priority_packages = [package for package in bucket if package.priority == top_priority_level]
+                if top_priority_packages:
+                    print(f"top_priority_packages: {top_priority_packages}")
+                    nearest_destinations = nearness(top_priority_packages, distances)
+                    print(f"nearest_destinations: {nearest_destinations}")
+                    if not nearest_destinations:
+                        previous_route_end = top_priority_packages[0].destination
+                        print(f"No nearest destinations found. Setting previous_route_end to {previous_route_end}")
+                    # Match nearest_destinations[0] to a package.pid in the bucket and get its package.destination
                     else:
-                        route = nearest_neighbor_algorithm(0, sublist, distances)
-                    if route[0][1] < self.time_constraint:  # Read the total time at index route[0][1] of the returned route and compare it to the time constraint
-                        routes[truck_id] = route[1]  # It will work (route[0] is meta data while route[1] is the actual route)
-                        continue
-                    else:
-                        break
-                if routes[truck_id]:
-                    # Get all the packages from the bucket that match any destination in the route
-                    packages_to_load = [package for package in bucket if package.destination in [dest[0] for dest in routes[truck_id]]]
+                        for package in bucket:
+                            if nearest_destinations and package.pid == nearest_destinations[0]:
+                                previous_route_end = package.destination
+                                break
+                        
+                
+                # Initialize the complete route
+                complete_route = []
+
+                # Create a sublist of destinations for each priority level
+                for priority, destinations in sorted(priority_destinations.items()):
+                    sublist = list(set(destinations))  # Remove duplicates
+                    # Create a route for each sublist of destinations
+                    for j in range(1, len(sublist) + 1):
+                        sublist_j = sublist[:j]
+                        if algo == "dijkstra":
+                            route = dijkstra(previous_route_end, sublist_j, distances)
+                        else:
+                            route = nearest_neighbor_algorithm(previous_route_end, sublist_j, distances)
+                        if route[0][1] < self.time_constraint:  # Read the total time at index route[0][1] of the returned route and compare it to the time constraint
+                            complete_route.extend(route[1])  # Append the route to the complete route
+                            previous_route_end = route[1][-1][0]  # Set the end of this route as the start for the next sublist
+                            continue
+                        else:
+                            break
+                
+                if complete_route:
+                    # Get all the packages from the bucket that match any destination in the complete route
+                    packages_to_load = [package for package in bucket if package.destination in [dest[0] for dest in complete_route]]
                     for package in packages_to_load:
                         self.load_package(package, truck_id)
-                    self.trucks[truck_id].set_route(routes[truck_id])
+                    self.trucks[truck_id].set_route(complete_route)
                     self.trucks[truck_id].go()
-###### TODO: End of stand-alone function
 
         self.initializing = False
 
     def load_package(self, package, i):
         if len(self.trucks[i].packages) < Truck.MAX_CAPACITY:
             try:
-                self.packages.remove(package.pid)
+                self.packages.remove(package.pid) # If it can't be removed, it was already loaded onto the truck once and shouldn't be loaded again.
             except:
                 return
             package.truck_id = self.trucks[i].truck_id

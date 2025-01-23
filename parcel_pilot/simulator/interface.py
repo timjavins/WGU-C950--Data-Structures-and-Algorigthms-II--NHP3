@@ -104,41 +104,67 @@ class InfoDisplayUI:
         self.adjust_column_widths(self.package_tree)
         self.adjust_column_widths(self.truck_tree)
 
-    def populate_package_info(self, packages):
-        for index, package in enumerate(packages):
-            tag = 'evenrow' if index % 2 == 0 else 'oddrow'
+    def populate_package_info(self, package_hash):
+        indices = 0
+        package_list = []
+        for bucket in package_hash.table:
+            if bucket is not None:
+                for item in bucket:
+                    package_list.append(item)
+        # Sort the package list by pid
+        package_list.sort(key=lambda x: int(x[0]))
+        # item[0] is the PID
+        # item[1:] holds address, city, state, zip_code, deadline, weight, status, etc.
+        for item in package_list:
+            pid = item[0]
+            status = item[7]
+            delivery_time = item[15]
+            deadline = item[5]
+            group = item[12]
+            priority = item[9]
+            location = item[11]
+            truck_id = item[10]
+            notes = item[8]
+            # mechanism for alternating row colors
+            tag = 'evenrow' if indices % 2 == 0 else 'oddrow'
             self.package_tree.insert(
                 "",
                 "end",
-                values=(
-                    package.pid,
-                    package.status,
-                    package.delivery_time,
-                    package.deadline,
-                    package.group,
-                    package.priority,
-                    package.location,
-                    package.truck_id,
-                    package.notes
-                    ),
+                values=(pid, status, delivery_time, deadline, group, priority, location, truck_id, notes),
                 tags=(tag,)
             )
-
-    def populate_truck_info(self, trucks):
-        for index, truck in enumerate(trucks):
-            tag = 'evenrow' if index % 2 == 0 else 'oddrow'
-            package_ids = ", ".join(str(pkg.pid) for pkg in truck.packages)
+            indices += 1
+    
+    def populate_truck_info(self, truck_hash):
+        indices = 0
+        truck_list = []
+        for bucket in truck_hash.table:
+            if bucket is not None:
+                for item in bucket:
+                    truck_list.append(item)
+        
+        # Sort the truck list by truck_id
+        truck_list.sort(key=lambda x: int(x[0]))
+    
+        for item in truck_list:
+            truck_id = item[0]
+            truck_data = item[1]
+            package_list = truck_data['packages']
+            package_ids = ", ".join(str(pkg_id) for pkg_id in package_list)  # Directly use pkg_id
+            # mechanism for alternating row colors
+            tag = 'evenrow' if indices % 2 == 0 else 'oddrow'
             self.truck_tree.insert(
                 "",
                 "end",
                 values=(
-                    truck.truck_id,
+                    truck_id,
                     package_ids,
-                    truck.current_location,
-                    truck.total_distance
+                    truck_data['current_location'],
+                    truck_data['total_distance']
                 ),
                 tags=(tag,)
             )
+            indices += 1
 
     def adjust_column_widths(self, tree):
         for col in tree["columns"]:

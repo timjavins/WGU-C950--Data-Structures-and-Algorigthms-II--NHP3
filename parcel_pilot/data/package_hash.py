@@ -1,4 +1,4 @@
-class HashTable:
+class PackageHashTable:
     def __init__(self, size=40):
         self.size = size
         self.table = [[] for _ in range(size)]
@@ -45,18 +45,45 @@ class HashTable:
         self.size = new_size
         self.table = new_table
 
-    def insert(self, pid, address, city, state, zip_code, deadline, weight, status, notes):
+    def insert(
+        self,
+        pid,
+        address,
+        city,
+        state,
+        zip_code,
+        deadline,
+        weight,
+        status,
+        notes,
+        priority=-1,
+        truck_id=None,
+        location=None,
+        group=None,
+        arrival_time=None,
+        destination=None,
+        delivery_time=None
+    ):
         """
         Inserts a package into the hash table.
-    
+        
         Parameters:
         pid (str): The package ID.
         address (str): The delivery address.
-        deadline (str): The delivery deadline.
         city (str): The delivery city.
+        state (str): The delivery state.
         zip_code (str): The delivery zip code.
+        deadline (str): The delivery deadline.
         weight (str): The package weight.
         status (str): The delivery status.
+        notes (str): Additional notes.
+        priority (int, optional): The priority of the package. Default is -1.
+        truck_id (str, optional): The truck ID. Default is None.
+        location (str, optional): The location. Default is None.
+        group (str, optional): The group. Default is None.
+        arrival_time (str, optional): The arrival time. Default is None.
+        destination (str, optional): The destination. Default is None.
+        delivery_time (str, optional): The delivery time. Default is None.
         """
         if self.count / self.size > 0.7:  # Load factor threshold to trigger the hash table's resize method for self-adjustment
             self._grow()
@@ -66,12 +93,45 @@ class HashTable:
             self.table[index] = []
         # Check if the PID already exists and update it
         for item in self.table[index]:
-            if item[0] == pid: # If the PID already exists, update the package data
-                item[1:] = [address, city, state, zip_code, deadline, weight, status, notes]
+            if item[0] == pid:
+                item[1:] = [
+                    address,
+                    city,
+                    state,
+                    zip_code,
+                    deadline,
+                    weight,
+                    status,
+                    notes,
+                    priority,
+                    truck_id,
+                    location,
+                    group,
+                    arrival_time,
+                    destination,
+                    delivery_time
+                ]
                 return "Updated"
         self.count += 1
         # If PID does not exist, append the new package data
-        self.table[index].append([pid, address, city, state, zip_code, deadline, weight, status, notes])
+        self.table[index].append([
+            pid,
+            address,
+            city,
+            state,
+            zip_code,
+            deadline,
+            weight,
+            status,
+            notes,
+            priority,
+            truck_id,
+            location,
+            group,
+            arrival_time,
+            destination,
+            delivery_time
+        ])
         return "Inserted"
     
     def get(self, pid):

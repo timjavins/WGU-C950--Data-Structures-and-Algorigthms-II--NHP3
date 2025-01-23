@@ -1,7 +1,7 @@
 # parser.py
 
 import csv
-from data.hash_table import HashTable
+from data.package_hash import PackageHashTable
 from helpers import find_partial_match, convert_to_24_hour_format, array_to_dict, reverse_dict
 from data.packages import Package
 
@@ -11,7 +11,7 @@ class DataParser:
         self.locations = []
         self.map_locations = {}
         self.map_locations_reverse = {}
-        self.packages = HashTable()
+        self.packages = PackageHashTable()
 
     def parse_distance_table(self, file_path):
         with open(file_path, mode='r') as file:

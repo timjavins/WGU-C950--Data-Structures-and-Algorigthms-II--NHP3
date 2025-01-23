@@ -10,7 +10,9 @@ This application uses a self-adjusting “nearest neighbor” algorithm (sometim
 `distributor.py`, the `Distributor.distribute_packages` method calls `nearness` (or a similar helper) to find the next closest destination. This approach automatically updates routing decisions based on the current set of package destinations, making it suitable for the daily local deliveries problem.
 
 ## B. Data Structure Identification
-A hash-based structure (Python dictionaries) is featured throughout the workspace to store and retrieve package data quickly (e.g., storing packages by unique ID in parcel_pilot/data/packages.py). Python dictionaries perform key-based lookups efficiently on average, adjusting their underlying structure (hash buckets) for fast operations.
+The application makes use of a hash table to record the states of all packages and trucks, every minute of the work day.
+
+A hash-based structure (Python dictionaries) is featured throughout the codebase to store and retrieve package data quickly (e.g., storing packages by unique ID in parcel_pilot/data/packages.py). Python dictionaries perform key-based lookups efficiently on average, adjusting their underlying structure (hash buckets) for fast operations.
 
 ### B1. Explanation of Data Structure
 The dictionary structure ensures each package can be accessed in O(1) average time by its unique identifier. This relationship is essential because the application frequently updates packages (e.g., status, destination, or group). For instance, the routing logic in `distributor.py` references packages by ID to load them into a truck at a specific time, and the scheduler in `time_sim.py` updates truck and package states each minute.

@@ -3,6 +3,8 @@ from router.distributor import Distributor
 from data.trucks import TruckManager, Truck
 from router.package_handler import intake_packages, prioritize_packages
 from simulator.minutes import Minute
+from data.package_hash import PackageHashTable
+from data.truck_hash import TruckHashTable
 import copy
 
 def calculate_time(minutes_after_8am):
@@ -117,8 +119,57 @@ def precompute_simulation_states(all_packages, trucks, distances, algo):
                 file.write(f"Log: {truck.travel_log}\n")
                 file.write(f"Route: {truck.route}\n")
             file.write("\n")
-        packages_copy = copy.deepcopy(packages)
-        trucks_copy = copy.deepcopy(trucks)
+        package_table = PackageHashTable()
+        for pkg in packages:
+            package_table.insert(
+                pkg.pid,
+                pkg.address,
+                pkg.city,
+                pkg.state,
+                pkg.zip_code,
+                pkg.deadline,
+                pkg.weight,
+                pkg.status,
+                pkg.notes,
+                pkg.priority,
+                pkg.truck_id,
+                pkg.location,
+                pkg.group,
+                pkg.arrival_time,
+                pkg.destination,
+                pkg.delivery_time
+            )
+        truck_table = TruckHashTable()
+        for truck in trucks:
+            package_ids = [pkg.pid for pkg in truck.packages]  # Extract only the package IDs
+            truck_table.insert(
+                truck.truck_id,
+                package_ids,
+                truck.current_location,
+                truck.distance_from_last_location,
+                truck.destination,
+                truck.distance_to_destination,
+                truck.total_distance,
+                truck.travel_log,
+                truck.route,
+                truck.trip_minutes,
+                truck.mile_marker
+            )
+        # Write the package and truck hash tables to a text file
+        with open("simulation_states.txt", "a") as file:
+            file.write("Package Hash Table:\n")
+            for i in range(package_table.size):
+                if package_table.table[i]:
+                    for item in package_table.table[i]:
+                        file.write(f"{item}\n")
+            file.write("\n")
+            file.write("Truck Hash Table:\n")
+            for i in range(truck_table.size):
+                if truck_table.table[i]:
+                    for item in truck_table.table[i]:
+                        file.write(f"{item}\n")
+            file.write("\n")
+
         # Create a Minute object and store it in the simulation_states dictionary
-        simulation_states[time] = Minute(time, packages_copy, trucks_copy)
+        simulation_states[time] = Minute(time, package_table, truck_table)
     return simulation_states

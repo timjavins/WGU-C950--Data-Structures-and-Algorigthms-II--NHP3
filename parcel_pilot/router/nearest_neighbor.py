@@ -11,8 +11,6 @@ def nearest_neighbor_algorithm(start_location, destinations_list, distances):
     Returns:
     list: The ordered list of package deliveries.
     """
-    print("NEAREST NEIGHBOR ALGORITHM")
-    print("Destinations List:", destinations_list)
 
     # Initialize the current location to the start location
     current_location = start_location
@@ -22,11 +20,11 @@ def nearest_neighbor_algorithm(start_location, destinations_list, distances):
     while destinations_list:
         # Create a lookup table for the distances from the current location to the delivery locations
         lookup_table = {}
-        for key in destinations_list:
+        for destination in destinations_list:
             try:
-                lookup_table[key] = distances[key][current_location]
+                lookup_table[destination] = distances[destination][current_location]
             except IndexError:
-                lookup_table[key] = distances[current_location][key]
+                lookup_table[destination] = distances[current_location][destination]
         # Find the nearest location using destinations_list as the keys to the lookup_table dictionary
         nearest_location = min(
             destinations_list,

@@ -12,9 +12,9 @@ def intake_packages(packages, time):
             package.state = "UT"
             package.zip_code = "84111"
             package.destination = 19
-            with open("simulation_states.txt", "a") as file:
-                file.write(f"Time: {time}\n")
-                file.write(f"Package {package.pid} updated to {package.address}, {package.city}, {package.state} {package.zip_code}\n")
+            # with open("simulation_states.txt", "a") as file:
+            #     file.write(f"Time: {time}\n")
+            #     file.write(f"Package {package.pid} updated to {package.address}, {package.city}, {package.state} {package.zip_code}\n")
         if package.truck_id is None:
             if package.notes.startswith('Wrong address listed'):
                 continue
@@ -39,10 +39,10 @@ def intake_packages(packages, time):
             else:
                 package.location = 0  # Default to the hub location
                 package.status = "AT DESTINATION HUB"
-    with open("intake packages.txt", "a") as file:
-        file.write(f"Time: {time}\n")
-        for package in packages:
-            file.write(f"Package {package} with PID {package.pid} - {package.status}\n")
+    # with open("intake packages.txt", "a") as file:
+    #     file.write(f"Time: {time}\n")
+    #     for package in packages:
+    #         file.write(f"Package {package} with PID {package.pid} - {package.status}\n")
     return packages
 
 def prioritize_packages(packages):
@@ -53,23 +53,21 @@ def prioritize_packages(packages):
         # Find the next package with a priority of -1, which means not prioritized yet
         for package in packages:
             if package.priority == -1:
+                # Find the lowest text-based time value among all packages with priority -1
+                lowest_deadline = min(
+                    (p.deadline for p in packages if p.priority == -1 and p.deadline != "EOD"),
+                    default=None
+                )
+                if lowest_deadline:
+                    # Assign the current priority value to all packages with the same deadline
+                    for p in packages:
+                        if p.deadline == lowest_deadline and p.priority == -1:
+                            p.priority = i
+                    # Increment the priority value
+                    i += 1
                 # Assign priority 0 to packages with a deadline of EOD
-                if package.deadline == "EOD":
-                    package.priority = 0
-                else:
-                    # Find the lowest text-based time value among all packages with priority -1
-                    lowest_deadline = min(
-                        (p.deadline for p in packages if p.priority == -1 and p.deadline != "EOD"),
-                        default=None
-                    )
-                    if lowest_deadline:
-                        # Assign the current priority value to all packages with the same deadline
-                        for p in packages:
-                            if p.deadline == lowest_deadline and p.priority == -1:
-                                p.priority = i
-                        # Increment the priority value
-                        i += 1
-                break
+                elif package.deadline == "EOD":
+                    package.priority = i
     return packages
 
 def link_packages(packages):

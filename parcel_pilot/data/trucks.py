@@ -57,6 +57,11 @@ class Truck:
             distance_traveled = self.trip_minutes * 0.3  # Trip distance traveled in miles per minute
             # Update the truck's position
             self.distance_from_last_location = distance_traveled - self.mile_marker
+            with open("truck states.txt", "a") as file:
+                file.write(f"Time: {current_time}\n")
+                file.write(f"Truck {self.truck_id} at {self.current_location} - {self.distance_from_last_location} miles from last location\n")
+                file.write(f"Truck {self.truck_id} route: {self.route}\n")
+                file.write(f"Truck {self.truck_id} packages: {[package.pid for package in self.packages]}\n")
     
             # Check if the truck has reached the destination
             if self.distance_from_last_location >= self.distance_to_destination:
@@ -83,5 +88,5 @@ class Truck:
                 # Log the location and time of arrival
                 self.travel_log.append((self.current_location, current_time))
                 self.go()
-            if self.current_location == 0 and not self.route:
-                self.trip_minutes = 0
+        if self.current_location == 0 and not self.route:
+            self.trip_minutes = 0

@@ -44,13 +44,14 @@ class InfoDisplayUI:
         # Package information display
         self.package_frame = ttk.Frame(root)
         self.package_frame.pack(fill='both', expand=True)
-        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Delivery Time", "Deadline", "Group", "Priority", "Location", "Truck", "Notes"), show="headings")
+        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Delivery Time", "Deadline", "Group", "Priority", "Destination", "Location", "Truck", "Notes"), show="headings")
         self.package_tree.heading("PID", text="PID")
         self.package_tree.heading("Status", text="Status")
         self.package_tree.heading("Delivery Time", text="Delivery Time")
         self.package_tree.heading("Deadline", text="Deadline")
         self.package_tree.heading("Group", text="Group")
         self.package_tree.heading("Priority", text="Priority")
+        self.package_tree.heading("Destination", text="Destination")
         self.package_tree.heading("Location", text="Location")
         self.package_tree.heading("Truck", text="Truck")
         self.package_tree.heading("Notes", text="Notes")
@@ -122,6 +123,7 @@ class InfoDisplayUI:
             deadline = item[5]
             group = item[12]
             priority = item[9]
+            destination = item[14]
             location = item[11]
             truck_id = item[10]
             notes = item[8]
@@ -130,7 +132,7 @@ class InfoDisplayUI:
             self.package_tree.insert(
                 "",
                 "end",
-                values=(pid, status, delivery_time, deadline, group, priority, location, truck_id, notes),
+                values=(pid, status, delivery_time, deadline, group, priority, destination, location, truck_id, notes),
                 tags=(tag,)
             )
             indices += 1

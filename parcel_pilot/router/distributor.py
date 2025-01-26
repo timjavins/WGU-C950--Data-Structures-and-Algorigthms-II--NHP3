@@ -16,7 +16,7 @@ class Distributor:
         self.initializing = True
         self.highest_priority_number = 0
         self.buckets = {truck.truck_id: [] for truck in self.trucks}
-        self.loaded_packages = set() # Track which packages were already added to buckets to avoid duplicates
+        self.bucket_packages = set() # Track which packages were already added to buckets to avoid duplicates
         self.packages = set() # To track which packages have not yet been distributed
 
     def distribute_packages(self, all_packages, time_string, next_flight_time, late_packages, distances, algo):
@@ -32,6 +32,7 @@ class Distributor:
             self.highest_priority_number = max(package.priority for package in all_packages)
             with open("distributor.txt", "w") as file:
                 file.write(f"Initial Distributor Packages: {self.packages}\n")
+            self.initializing = False
         
         # If no trucks are at location 0, stop
         available_trucks = [truck.truck_id for truck in self.trucks if truck.current_location == 0]
@@ -85,7 +86,7 @@ class Distributor:
                 if package.pid not in self.packages:
                     packages.remove(package)
                     continue
-                if package.priority == priority and package.pid not in self.loaded_packages and package.pid in self.packages:
+                if package.priority == priority and package.pid not in self.bucket_packages and package.pid in self.packages:
                     this_package = package
                     # Check how many packages are in each bucket. Set truck index to the bucket with the fewest packages
                     truck_index = min(range(len(available_trucks)), key=lambda i: len(self.buckets[available_trucks[i]]))
@@ -100,19 +101,19 @@ class Distributor:
                     self.buckets[truck_id].append(package)
                     with open("simulation_states.txt", "a") as file:
                         file.write(f"Package {package.pid} added to truck {truck_id} with priority {package.priority}\n")
-                    self.loaded_packages.add(package.pid)  # Mark package as added
+                    self.bucket_packages.add(package.pid)  # Mark package as added
                     for pkg in packages:
-                        if pkg.pid != this_package.pid and pkg.pid not in self.loaded_packages:
+                        if pkg.pid != this_package.pid and pkg.pid not in self.bucket_packages:
                             if pkg.destination == destination:  # Find other packages with the same destination
                                 self.buckets[truck_id].append(pkg)
                                 with open("simulation_states.txt", "a") as file:
                                     file.write(f"Destination match: package {pkg.pid} added to truck {truck_id} with priority {pkg.priority}\n")
-                                self.loaded_packages.add(pkg.pid)  # Mark package as added
+                                self.bucket_packages.add(pkg.pid)  # Mark package as added
                             elif group and pkg.group == group:  # Find other packages with the same group
                                 self.buckets[truck_id].append(pkg)
                                 with open("simulation_states.txt", "a") as file:
                                     file.write(f"Group match: package {pkg.pid} added to truck {truck_id} with priority {pkg.priority}\n")
-                                self.loaded_packages.add(pkg.pid)  # Mark package as added
+                                self.bucket_packages.add(pkg.pid)  # Mark package as added
     
         # write the contents of each bucket to log
         for truck_id, bucket in self.buckets.items():
@@ -130,93 +131,130 @@ class Distributor:
             file.write("==================ROUTING==================\n")
         for truck_id, bucket in self.buckets.items():
             if bucket:
-                # Group destinations by priority levels
-                priority_destinations = {}
                 for package in bucket:
                     # Handle possible duplicate package objects by verifying the package is in self.packages
                     if package.pid not in self.packages:
                         bucket.remove(package)
-                    if package.priority not in priority_destinations:
-                        priority_destinations[package.priority] = []
-                    priority_destinations[package.priority].append(package.destination)
                 with open("distributor.txt", "a") as file:
                     file.write(f"line 143 bucket: {[package.pid for package in bucket]}\n")
-                    file.write(f"line 144 priority_destinations: {priority_destinations}\n")
 
                 if not bucket: # If all the packages were removed from the bucket, move to the next bucket
                     continue                      
                 
                 # Initialize the route variables
-                delivery_route = [[0, 0], [(0, 0.0)]]
-                complete_route = []
-                candidate_route = []
-                previous_route_end = 0
+                route_dict = {}
                 aggregate_time = 0
                 aggregate_distance = 0
+                previous_route_end = 0
                 
                 with open("distributor.txt", "a") as file:
                     file.write(f"====================Routing for truck {truck_id}====================\n")
                     file.write(f"previous_route_end before loop: {previous_route_end}\n")
-                
-                # Create a sublist of destinations for each priority level
-                for priority, destinations in sorted(priority_destinations.items()):
-                    sublist = list(set(destinations))  # Remove duplicates
-                    # Create a route for each sublist of destinations
-                    with open("distributor.txt", "a") as file:
-                        file.write(f"Priority {priority} destinations sublist: {sublist}\n")
-                    for j in range(1, len(sublist) + 1):
-                        sublist_j = sublist[:j]
-                        if algo == "dijkstra":
-                            new_route = dijkstra(previous_route_end, sublist_j, distances)
-                        else:
-                            new_route = nearest_neighbor_algorithm(previous_route_end, sublist_j, distances)
-                        check_time = aggregate_time + delivery_route[0][1] + new_route[0][1]
-                        with open("distributor.txt", "a") as file:
-                            file.write(f"Priority {priority} round {j} new route: {new_route}\n")
-                            file.write(f"Priority {priority} round {j} delivery route: {delivery_route}\n")
-                            file.write(f"Priority {priority} round {j} complete route: {complete_route}\n")
-                            file.write(f"Priority {priority} round {j} check time: {check_time}\n")
-                        if check_time < self.time_constraint:
-                            delivery_distance = delivery_route[0][0] + new_route[0][2]
-                            complete_route = self.combine_routes(delivery_route[1], new_route[1], (delivery_route[0][0] + new_route[0][0]), check_time)  # Append the route to the complete route
-                            delivery_route = self.combine_routes(delivery_route[1], new_route[1][0:-2], delivery_distance, (delivery_route[0][1] + new_route[0][3]))  # Update the delivery route
-                            previous_route_end = delivery_route[1][-1][0]  # Set the end of this route (excluding return to hub) as the start for the next sublist
-                            with open("distributor.txt", "a") as file:
-                                file.write(f"Route time of {new_route[0][1]} is less than the time constraint of {self.time_constraint}\n")
-                                file.write(f"delivery route: {delivery_route}\n")
-                                file.write(f"complete route: {complete_route}\n")
-                                file.write(f"new previous_route_end: {previous_route_end}\n")
-                        else:
-                            break  # Stop if the time constraint is exceeded
-                    if complete_route:
-                        if complete_route[1][0] == (0, 0.0):
-                            complete_route[1].pop(0)
-                            with open("distributor.txt", "a") as file:
-                                file.write(f"Line 192 Removed the hub from the route: {complete_route}\n")
-                        candidate_route += complete_route[1]
-                    aggregate_distance += delivery_route[0][0]
-                    aggregate_time += delivery_route[0][1]
-                    print(f"aggregate_time: {aggregate_time}, aggregate_distance: {aggregate_distance}, candidate_route: {candidate_route}")
-                
-                # Combine all the routes together
-                final_route = [[aggregate_distance, aggregate_time], candidate_route]
-                print(f"Final route: {final_route}")
-                
-                with open("distributor.txt", "a") as file:
-                    file.write(f"line 199 complete route: {complete_route}\n")
-                if complete_route:
-                    # Get all the packages from the bucket that match any destination in the complete route
-                    packages_to_load = [package for package in bucket if package.destination in [dest[0] for dest in complete_route]]
-                    print(f"packages_to_load: {packages_to_load}")
-                    for package in packages_to_load:
-                        self.load_package(package, truck_id)
-                    self.trucks[truck_id].set_route(complete_route[1])
-                    self.trucks[truck_id].go()
 
-        self.initializing = False
+                # # Upgrade grouped packages to the highest priority level among the group
+                # group_list = []
+                # for package in packages:
+                #     if package.group and package.group not in group_list:
+                #         group_list.append(package.group)
+                # for x in group_list:
+                #     this_group = [pkg for pkg in packages if pkg.group == x]
+                #     print(f"Group {x}: {[pkg.pid for pkg in this_group]}")
+                #     highest_priority = min(pkg.priority for pkg in this_group) # The lower the priority number, the higher the priority
+                #     for pkg in this_group:
+                #         pkg.priority = highest_priority
+                
+                # Find packages for each priority level, check if they have a package.group, group them with the same group, send them out
+                truck_sent = False
+                for priority in range(1, self.highest_priority_number + 1):
+                    for package in bucket:
+                        if package.priority == priority:
+                            group = package.group
+                            if group: # If the package has a group, find all other packages with the same group or destination or priority
+                                group_packages = [pkg for pkg in bucket if pkg.group == group or pkg.priority == priority]
+                                destinations = []
+                                destinations += [pkg.destination for pkg in group_packages]
+                                destinations = set(destinations)  # Remove duplicates
+                                group_packages += [pkg for pkg in bucket if pkg.destination in destinations]
+                                group_packages = set(group_packages) # Ensure there are no duplicates
+                                # Get the route for this group of packages
+                                route = self.get_route(group_packages, distances, algo)
+                                # Send the packages out
+                                self.send_it(group_packages, truck_id, route, time, distances)
+                                truck_sent = True
+                                break
+                    if truck_sent:
+                        break
+                if truck_sent:
+                    continue
+                
+                # Handle the remaining packages
+                queue = []
+                for priority in range(1, self.highest_priority_number + 1):
+                    for package in bucket:
+                        if package.priority == priority:
+                            queue.append(package)
+                            if len(queue) == 16:
+                                break
+                        for pkg in bucket:
+                            if pkg.destination == package.destination and pkg not in queue and len(queue) < 16:
+                                queue.append(pkg)
+                            if len(queue) == 16:
+                                break
+                    if len(queue) == 16:
+                        break
+                route = self.get_route(queue, distances, algo)
+                self.send_it(queue, truck_id, route, time, distances)
 
-    # def get_route
+    def get_route(self, packages, distances, algo):
+        routes = {}
+        previous_route_end = 0
+        for priority in range(1, self.highest_priority_number + 1):
+            destinations = []
+            for package in packages:
+                if package.priority == priority and package.destination not in destinations:
+                    destinations.append(package.destination)
+            destinations = set(destinations) # ensure no duplicates
+            if algo == "dijkstra":
+                route = dijkstra(previous_route_end, destinations, distances)
+            else:
+                route = nearest_neighbor_algorithm(previous_route_end, destinations, distances)
+            # add the route to the routes dictionary with the priority as the key
+            routes[priority] = route
+            try:
+                previous_route_end = route[1][-1][0]
+            except:
+                break
+        # combine all the routes from the dictionary into final route
+        final_route = [0, 0], []
+        for priority in sorted(routes.keys()):
+            full_route = routes[priority]
+            final_route[0][0] += full_route[0][0]  # sum total distances
+            final_route[0][1] += full_route[0][1]  # sum total times
+            final_route[1].extend(full_route[1])  # concatenate routes
+        with open("routing.txt", "a") as file:
+            # Log all the variables in this function
+            file.write(f"Final Route: {final_route}\n")
+        return final_route
     
+    def send_it(self, packages, i, route, time, distances):
+        # Add destination 0 to the end of the final route
+        if route[1]:
+            last_destination = route[1][-1][0]
+            distance_to_hub = distances[last_destination][0] if last_destination in distances and 0 in distances[last_destination] else distances[0][last_destination]
+            route[1].append((0, distance_to_hub))
+            route[0][0] += distance_to_hub
+            route[0][1] += distance_to_hub / 0.3
+
+            for package in packages:
+                self.load_package(package, i, time)
+            self.trucks[i].set_route(route[1])
+            self.trucks[i].go()
+            with open("simulation_states.txt", "a") as file:
+                file.write(f"==============Sending Truck {i} at {time}==============\n")
+                file.write(f"Truck {i} route: {route}\n")
+                file.write(f"Truck {i} packages: {[package.pid for package in self.trucks[i].packages]}\n")
+                file.write(f"Truck {i} bucket: {[package.pid for package in self.buckets[i]]}\n")
+
     def combine_routes(self, old_route, new_route, distance, time):
         identifier = random.randint(0, 1000)
         # Combine the old route with the new route
@@ -229,15 +267,19 @@ class Distributor:
             file.write(f"{identifier} Route {route}\n")
         return route
     
-    def load_package(self, package, i):
-        print("Running package loader")
+    def load_package(self, package, i, time):
         if len(self.trucks[i].packages) < Truck.MAX_CAPACITY:
+            with open("package loader.txt", "a") as file:
+                file.write(f"Distributor packages at {time}: {self.packages}\n")
+                file.write(f"Truck {i} bucket: {[package.pid for package in self.buckets[i]]}\n")
             try:
                 self.packages.remove(package.pid) # If it can't be removed, it was already loaded onto the truck once and shouldn't be loaded again.
+                self.buckets[i].remove(package)
             except:
                 return
             package.truck_id = self.trucks[i].truck_id
             with open("package loader.txt", "a") as file:
                 file.write(f"Loading package {package.pid} onto truck {self.trucks[i].truck_id} - p.tid {package.truck_id}, Destination {package.destination}\n")
                 file.write(f"Distributor Packages: {self.packages}\n")
+                file.write(f"Truck {i} bucket: {[package.pid for package in self.buckets[i]]}\n")
             self.trucks[i].add_package(package)

@@ -153,7 +153,8 @@ def precompute_simulation_states(all_packages, trucks, distances, algo):
                 truck.travel_log,
                 truck.route,
                 truck.trip_minutes,
-                truck.mile_marker
+                truck.mile_marker,
+                truck.total_time
             )
         # Write the package and truck hash tables to a text file
         with open("simulation_states.txt", "a") as file:

@@ -24,6 +24,7 @@ class Truck:
         self.route = []
         self.trip_minutes = 0
         self.mile_marker = 0
+        self.total_time = 0
 
     def __str__(self):
         return f"Truck ID: {self.truck_id}, Current Location: {self.current_location}, Total Distance: {self.total_distance}, Packages: {[pkg.pid for pkg in self.packages]}"
@@ -53,7 +54,9 @@ class Truck:
 
     def update_position(self, current_time):
         if self.route:
-            self.trip_minutes += 1  # Increment the time spent on the road, expecting position updates to be exactly once per minute.
+            if self.current_location != 0:
+                self.trip_minutes += 1  # Increment the time spent on the road, expecting position updates to be exactly once per minute.
+                self.total_time += 1
             distance_traveled = self.trip_minutes * 0.3  # Trip distance traveled in miles per minute
             # Update the truck's position
             self.distance_from_last_location = distance_traveled - self.mile_marker
@@ -65,12 +68,12 @@ class Truck:
     
             # Check if the truck has reached the destination
             if self.distance_from_last_location >= self.distance_to_destination:
-                self.route.pop(0)
+                self.total_distance += self.distance_to_destination
                 self.current_location = self.destination
                 self.distance_from_last_location = 0.0
                 self.distance_to_destination = 0.0
-                self.total_distance += self.distance_from_last_location
                 self.mile_marker = distance_traveled
+                self.route.pop(0)
                 # Create a list of packages to be removed
                 packages_to_remove = []
                 # Check all the packages on the truck to deliver the proper package(s)
@@ -90,3 +93,4 @@ class Truck:
                 self.go()
         if self.current_location == 0 and not self.route:
             self.trip_minutes = 0
+            self.mile_marker = 0

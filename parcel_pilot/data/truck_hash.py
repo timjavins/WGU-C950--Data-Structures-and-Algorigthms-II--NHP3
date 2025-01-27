@@ -20,7 +20,8 @@ class TruckHashTable:
         travel_log,
         route,
         trip_minutes,
-        mile_marker
+        mile_marker,
+        total_time
     ):
         if self.count / self.size > 0.7:
             self._grow()
@@ -35,7 +36,8 @@ class TruckHashTable:
             'travel_log': travel_log,
             'route': route,
             'trip_minutes': trip_minutes,
-            'mile_marker': mile_marker
+            'mile_marker': mile_marker,
+            'total_time': total_time
         }
         for item in self.table[index]:
             if item[0] == truck_id:

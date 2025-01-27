@@ -7,6 +7,9 @@ from router.nearest_neighbor import nearest_neighbor_algorithm
 import random
 import traceback
 
+### This version of the Distributor class balances loads by min destination counts rather than by package count.
+### Need to balance the loads by package count, but always match destinations to the same truck wherever possible.
+
 class Distributor:
     def __init__(self, trucks):
         self.trucks = trucks
@@ -17,6 +20,7 @@ class Distributor:
         self.initializing = True
         self.highest_priority_number = 0
         self.buckets = {truck.truck_id: [] for truck in self.trucks}
+        self.bucket_destinations = {truck.truck_id: [] for truck in self.trucks}
         self.bucket_packages = set() # Track which packages were already added to buckets to avoid duplicates
         self.packages = set() # To track which packages have not yet been distributed
 
@@ -91,17 +95,23 @@ class Distributor:
                     continue
                 if package.priority == priority and package.pid not in self.bucket_packages and package.pid in self.packages:
                     this_package = package
-                    # Check how many packages are in each bucket. Set truck index to the bucket with the fewest packages
-                    truck_index = min(range(len(available_trucks)), key=lambda i: len(self.buckets[available_trucks[i]]))
+                    # Check how many destinations are in each bucket. Set truck index to the bucket with the fewest packages
+                    truck_index = min(range(len(available_trucks)), key=lambda i: len(self.bucket_destinations[available_trucks[i]]))
                     # Check the notes for truck requirements
                     match = re.search(r'Can only be on truck (\d+)', package.notes)
                     if match:
                         truck_id = int(match.group(1))
                     else:
-                        truck_id = available_trucks[truck_index]
+                        for truck_id, destinations in self.bucket_destinations.items():
+                            if package.destination in destinations:
+                                self.buckets[truck_id].append(package)
+                                break
+                        else:
+                            truck_id = available_trucks[truck_index]
                     destination = package.destination  # read its destination
                     group = package.group  # read its group
                     self.buckets[truck_id].append(package)
+                    self.bucket_destinations[truck_id].append(destination) if destination not in self.bucket_destinations[truck_id] else None
                     with open("simulation_states.txt", "a") as file:
                         file.write(f"{time}: Package {package.pid} added to truck {truck_id} with priority {package.priority}\n")
                     self.bucket_packages.add(package.pid)  # Mark package as added

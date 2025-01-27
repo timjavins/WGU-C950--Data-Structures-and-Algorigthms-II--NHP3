@@ -6,7 +6,7 @@ def intake_packages(packages, time):
     # Update the location of the packages based on the current time
     for package in packages:
         if package.pid == "9" and time == "10:20":
-            package.notes = ""
+            package.notes = "Address updated at 10:20"
             package.address = "410 S State St"
             package.city = "Salt Lake City"
             package.state = "UT"
@@ -32,6 +32,7 @@ def intake_packages(packages, time):
                     else:
                         package.location = 0
                         package.status = "AT DESTINATION HUB"
+                        package.notes = f"Arrived to depot at {note_time}"
                 else:
                     package.location = None  # Delayed packages have no location
                     package.status = "IN TRANSIT - DELAYED"

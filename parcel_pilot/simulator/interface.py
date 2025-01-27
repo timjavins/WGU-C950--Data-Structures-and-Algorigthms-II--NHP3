@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog, font
-from simulator.time_sim import calculate_time, calculate_minutes, precompute_simulation_states
+from simulator.time_sim import calculate_time, calculate_minutes
 import re
 
 class ChooseAlgo(simpledialog.Dialog):
@@ -44,13 +44,12 @@ class InfoDisplayUI:
         # Package information display
         self.package_frame = ttk.Frame(root)
         self.package_frame.pack(fill='both', expand=True)
-        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Delivery Time", "Deadline", "Group", "Priority", "Destination", "Location", "Truck", "Notes"), show="headings")
+        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Delivery Time", "Deadline", "Group", "Destination", "Location", "Truck", "Notes"), show="headings")
         self.package_tree.heading("PID", text="PID")
         self.package_tree.heading("Status", text="Status")
         self.package_tree.heading("Delivery Time", text="Delivery Time")
         self.package_tree.heading("Deadline", text="Deadline")
         self.package_tree.heading("Group", text="Group")
-        self.package_tree.heading("Priority", text="Priority")
         self.package_tree.heading("Destination", text="Destination")
         self.package_tree.heading("Location", text="Location")
         self.package_tree.heading("Truck", text="Truck")
@@ -59,13 +58,22 @@ class InfoDisplayUI:
         
         # Truck information display
         self.truck_frame = ttk.Frame(root)
-        self.truck_frame.pack(fill='both', expand=True)
-        self.truck_tree = ttk.Treeview(self.truck_frame, columns=("Truck ID", "Packages", "Location", "Miles"), show="headings")
+        self.truck_frame.pack(fill='both', expand=True, side=tk.LEFT)
+        self.truck_tree = ttk.Treeview(self.truck_frame, columns=("Truck ID", "Packages", "Location", "Miles", "Road Time"), show="headings")
         self.truck_tree.heading("Truck ID", text="Truck ID")
         self.truck_tree.heading("Packages", text="Packages")
         self.truck_tree.heading("Location", text="Location")
         self.truck_tree.heading("Miles", text="Miles")
+        self.truck_tree.heading("Road Time", text="Road Time")
         self.truck_tree.pack(fill='both', expand=True)
+
+        # Summary information display
+        self.summary_frame = ttk.Frame(root)
+        self.summary_frame.pack(fill='both', expand=True, side=tk.RIGHT)
+        self.total_miles_label = ttk.Label(self.summary_frame, text="Total Miles: 0", font=("Helvetica", 14))
+        self.total_miles_label.pack(pady=10)
+        self.on_time_percentage_label = ttk.Label(self.summary_frame, text="On-Time Delivery: 0%", font=("Helvetica", 14))
+        self.on_time_percentage_label.pack(pady=10)
 
         # Configure TKinter tags for alternating row colors in package_tree and truck_tree
         self.package_tree.tag_configure("oddrow", background="#ffffff") # white
@@ -101,6 +109,8 @@ class InfoDisplayUI:
         self.populate_package_info(simulation_state.packages)
         # Populate the truck information
         self.populate_truck_info(simulation_state.trucks)
+        # Update the summary information
+        self.update_summary_info(simulation_state)
         # Adjust column widths to fit content
         self.adjust_column_widths(self.package_tree)
         self.adjust_column_widths(self.truck_tree)
@@ -122,7 +132,6 @@ class InfoDisplayUI:
             delivery_time = item[15]
             deadline = item[5]
             group = item[12]
-            priority = item[9]
             destination = item[14]
             location = item[11]
             truck_id = item[10]
@@ -132,7 +141,7 @@ class InfoDisplayUI:
             self.package_tree.insert(
                 "",
                 "end",
-                values=(pid, status, delivery_time, deadline, group, priority, destination, location, truck_id, notes),
+                values=(pid, status, delivery_time, deadline, group, destination, location, truck_id, notes),
                 tags=(tag,)
             )
             indices += 1
@@ -153,6 +162,8 @@ class InfoDisplayUI:
             truck_data = item[1]
             package_list = truck_data['packages']
             package_ids = ", ".join(str(pkg_id) for pkg_id in package_list)  # Directly use pkg_id
+            total_time = self.format_time(truck_data['total_time']) # Convert total time to hours and minutes
+            total_distance = round(truck_data['total_distance'], 2)  # Round the total distance to 2 decimal places
             # mechanism for alternating row colors
             tag = 'evenrow' if indices % 2 == 0 else 'oddrow'
             self.truck_tree.insert(
@@ -162,11 +173,23 @@ class InfoDisplayUI:
                     truck_id,
                     package_ids,
                     truck_data['current_location'],
-                    truck_data['total_distance']
+                    total_distance,
+                    total_time
                 ),
                 tags=(tag,)
             )
             indices += 1
+
+    def update_summary_info(self, simulation_state):
+        total_miles = sum(truck_data['total_distance'] for bucket in simulation_state.trucks.table if bucket for truck_id, truck_data in bucket)
+        total_miles = round(total_miles, 2)
+        total_packages = sum(len(truck_data['packages']) for bucket in simulation_state.trucks.table if bucket for truck_id, truck_data in bucket)
+        delivered_on_time = sum(1 for bucket in simulation_state.packages.table if bucket for package in bucket if package[7] == 'Delivered' and package[15] <= package[5])
+        total_delivered = sum(1 for bucket in simulation_state.packages.table if bucket for package in bucket if package[7] == 'Delivered')
+        on_time_percentage = (delivered_on_time / total_delivered * 100) if total_delivered > 0 else 0
+
+        self.total_miles_label.config(text=f"Total Miles: {total_miles}")
+        self.on_time_percentage_label.config(text=f"On-Time Delivery: {on_time_percentage:.2f}%")
 
     def adjust_column_widths(self, tree):
         for col in tree["columns"]:
@@ -175,6 +198,11 @@ class InfoDisplayUI:
                 item_text = tree.item(item, "values")[tree["columns"].index(col)]
                 max_width = max(max_width, font.Font().measure(item_text))
             tree.column(col, width=max_width)
+    
+    def format_time(self, minutes):
+        hours = minutes // 60
+        minutes = minutes % 60
+        return f"{hours} hr, {minutes} min"
 
 class TimeSimulatorUI:
     def __init__(self, root, simulation_states):

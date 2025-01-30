@@ -82,6 +82,10 @@ class Truck:
                         package.status = f"DELIVERED AT {current_time}"
                         package.delivery_time = current_time
                         package.location = self.current_location
+                        if package.deadline == "EOD" or  current_time <= package.deadline:
+                            package.timely = True
+                        else:
+                            package.timely = False
                         packages_to_remove.append(package)
                         with open("simulation_states.txt", "a") as file:
                             file.write(f"Package {package.pid} delivered at {current_time} (Deadline was {package.deadline})\n")

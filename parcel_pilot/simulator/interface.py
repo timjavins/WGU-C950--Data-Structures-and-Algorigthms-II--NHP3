@@ -44,11 +44,12 @@ class InfoDisplayUI:
         # Package information display
         self.package_frame = ttk.Frame(root)
         self.package_frame.pack(fill='both', expand=True)
-        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Delivery Time", "Deadline", "Group", "Destination", "Location", "Truck", "Notes"), show="headings")
+        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Delivery Time", "Deadline", "Timely", "Group", "Destination", "Location", "Truck", "Notes"), show="headings")
         self.package_tree.heading("PID", text="PID")
         self.package_tree.heading("Status", text="Status")
         self.package_tree.heading("Delivery Time", text="Delivery Time")
         self.package_tree.heading("Deadline", text="Deadline")
+        self.package_tree.heading("Timely", text="Timely")
         self.package_tree.heading("Group", text="Group")
         self.package_tree.heading("Destination", text="Destination")
         self.package_tree.heading("Location", text="Location")
@@ -70,10 +71,16 @@ class InfoDisplayUI:
         # Summary information display
         self.summary_frame = ttk.Frame(root)
         self.summary_frame.pack(fill='both', expand=True, side=tk.RIGHT)
-        self.total_miles_label = ttk.Label(self.summary_frame, text="Total Miles: 0", font=("Helvetica", 14))
-        self.total_miles_label.pack(pady=10)
+        self.progress_bar = ttk.Progressbar(self.summary_frame, orient='horizontal', length=200, mode='determinate')
+        self.progress_bar.pack(pady=10)
+        self.progress_label = ttk.Label(self.summary_frame, text="Progress: 0/0 packages delivered", font=("Helvetica", 14))
+        self.progress_label.pack(pady=10)
         self.on_time_percentage_label = ttk.Label(self.summary_frame, text="On-Time Delivery: 0%", font=("Helvetica", 14))
         self.on_time_percentage_label.pack(pady=10)
+        self.total_miles_label = ttk.Label(self.summary_frame, text="Total Miles: 0", font=("Helvetica", 14))
+        self.total_miles_label.pack(pady=10)
+        self.score_label = ttk.Label(self.summary_frame, text="Score: 0%", font=("Helvetica", 14))
+        self.score_label.pack(pady=10)
 
         # Configure TKinter tags for alternating row colors in package_tree and truck_tree
         self.package_tree.tag_configure("oddrow", background="#ffffff") # white
@@ -131,6 +138,7 @@ class InfoDisplayUI:
             status = item[7]
             delivery_time = item[15]
             deadline = item[5]
+            timely = item[16]
             group = item[12]
             destination = item[14]
             location = item[11]
@@ -141,7 +149,7 @@ class InfoDisplayUI:
             self.package_tree.insert(
                 "",
                 "end",
-                values=(pid, status, delivery_time, deadline, group, destination, location, truck_id, notes),
+                values=(pid, status, delivery_time, deadline, timely, group, destination, location, truck_id, notes),
                 tags=(tag,)
             )
             indices += 1
@@ -183,13 +191,19 @@ class InfoDisplayUI:
     def update_summary_info(self, simulation_state):
         total_miles = sum(truck_data['total_distance'] for bucket in simulation_state.trucks.table if bucket for truck_id, truck_data in bucket)
         total_miles = round(total_miles, 2)
-        total_packages = sum(len(truck_data['packages']) for bucket in simulation_state.trucks.table if bucket for truck_id, truck_data in bucket)
-        delivered_on_time = sum(1 for bucket in simulation_state.packages.table if bucket for package in bucket if package[7] == 'Delivered' and package[15] <= package[5])
-        total_delivered = sum(1 for bucket in simulation_state.packages.table if bucket for package in bucket if package[7] == 'Delivered')
+        total_packages = sum(1 for package_list in simulation_state.packages.table if package_list for package in package_list)
+        delivered_on_time = sum(1 for package_list in simulation_state.packages.table if package_list for package in package_list if package[16])
+        total_delivered = sum(1 for package_list in simulation_state.packages.table if package_list for package in package_list if package[14] == package[11])
         on_time_percentage = (delivered_on_time / total_delivered * 100) if total_delivered > 0 else 0
+        on_time_percentage = round(on_time_percentage, 2)
+        score = round(((total_delivered + delivered_on_time) / (total_packages * 2) * 100), 2)
 
-        self.total_miles_label.config(text=f"Total Miles: {total_miles}")
+        self.score_label.config(text=f"Score: {score}%")
         self.on_time_percentage_label.config(text=f"On-Time Delivery: {on_time_percentage:.2f}%")
+        self.progress_label.config(text=f"Progress: {total_delivered}/{total_packages} packages delivered")
+        # progress bar
+        self.progress_bar['value'] = total_delivered/total_packages * 100
+        self.total_miles_label.config(text=f"Total Miles: {total_miles}")
 
     def adjust_column_widths(self, tree):
         for col in tree["columns"]:

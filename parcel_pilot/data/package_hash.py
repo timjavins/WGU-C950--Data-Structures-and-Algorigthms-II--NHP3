@@ -62,7 +62,8 @@ class PackageHashTable:
         group=None,
         arrival_time=None,
         destination=None,
-        delivery_time=None
+        delivery_time=None,
+        timely=None
     ):
         """
         Inserts a package into the hash table.
@@ -84,6 +85,7 @@ class PackageHashTable:
         arrival_time (str, optional): The arrival time. Default is None.
         destination (str, optional): The destination. Default is None.
         delivery_time (str, optional): The delivery time. Default is None.
+        timely (bool, optional): Whether the package was delivered on time. Default is None.
         """
         if self.count / self.size > 0.7:  # Load factor threshold to trigger the hash table's resize method for self-adjustment
             self._grow()
@@ -109,7 +111,8 @@ class PackageHashTable:
                     group,
                     arrival_time,
                     destination,
-                    delivery_time
+                    delivery_time,
+                    timely
                 ]
                 return "Updated"
         self.count += 1
@@ -130,7 +133,8 @@ class PackageHashTable:
             group,
             arrival_time,
             destination,
-            delivery_time
+            delivery_time,
+            timely
         ])
         return "Inserted"
     

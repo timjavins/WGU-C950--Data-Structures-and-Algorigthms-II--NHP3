@@ -137,7 +137,8 @@ def precompute_simulation_states(all_packages, trucks, distances, algo):
                 pkg.group,
                 pkg.arrival_time,
                 pkg.destination,
-                pkg.delivery_time
+                pkg.delivery_time,
+                pkg.timely
             )
         truck_table = TruckHashTable()
         for truck in trucks:

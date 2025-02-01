@@ -1,3 +1,12 @@
+"""
+The main Python file in the Parcel Pilot application orchestrates data parsing, object initialization, and user interface setup for simulating package delivery.
+
+Functions
+---------
+main()
+    Parses data, prepares simulation states, and runs the graphical user interface.
+"""
+
 from data.parser import DataParser
 from router.package_handler import link_packages, group_linked_packages
 from simulator.interface import ChooseAlgo, TimeSimulatorUI, InfoDisplayUI, center_window, position_time_simulator, on_closing
@@ -45,6 +54,17 @@ simulation_states = precompute_simulation_states(packages, trucks, distances, gr
 
 # Initialize and run the UI
 def main():
+    """
+    Sets up data parsing, simulation states, and the UI before running the main loop.
+
+    Space Complexity
+    ---------------
+        O(n)
+
+    Time Complexity
+    ---------------
+        O(n)
+    """
     root = tk.Tk() # Create the main window for the InfoDisplayUI
     sub_root = tk.Toplevel() # Create a sub window for the TimeSimulatorUI
     # Instantiate the main user interface components

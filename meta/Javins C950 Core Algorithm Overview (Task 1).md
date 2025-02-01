@@ -12,7 +12,7 @@ This application uses a self-adjusting “nearest neighbor” algorithm (sometim
 ## B. Data Structure Identification
 The application makes use of a hash table to record the states of all packages and trucks, every minute of the work day.
 
-A hash-based structure (Python dictionaries) is featured throughout the codebase to store and retrieve package data quickly (e.g., storing packages by unique ID in parcel_pilot/data/packages.py). Python dictionaries perform key-based lookups efficiently on average, adjusting their underlying structure (hash buckets) for fast operations.
+A hash-based structure (custom hash tables) is featured throughout the codebase to store and retrieve package data quickly (e.g., storing packages by unique ID in `parcel_pilot/data/package_hash.py`). These hash tables perform key-based lookups efficiently on average, adjusting their underlying structure (hash buckets) for fast operations.
 
 ### B1. Explanation of Data Structure
 The dictionary structure ensures each package can be accessed in O(1) average time by its unique identifier. This relationship is essential because the application frequently updates packages (e.g., status, destination, or group). For instance, the routing logic in `distributor.py` references packages by ID to load them into a truck at a specific time, and the scheduler in `time_sim.py` updates truck and package states each minute.
@@ -52,39 +52,45 @@ In words:
 3. Store a snapshot of the day’s state in a “minute object” so the UI can retrieve package/truck status.
 
 ### C2. Development Environment
-- Software: Python 3.x, leveraging libraries such as tkinter (for UI), datetime, and potentially custom modules (e.g., parcel_pilot/simulator/time_sim.py).  
-- Hardware: Any environment supporting Python 3 (Windows, macOS, Linux) with sufficient memory (e.g., 4GB+) and CPU to run Python scripts efficiently.  
-- Editor/IDE: Visual Studio Code for editing the Python code, with built-in terminals and debug features.
+- Software: Python 3.x, including libraries such as tkinter (for UI), datetime, csv (for reading input files), heapq (for Dijkstra’s algorithm), and custom modules (for example, parcel_pilot/simulator/time_sim.py). Git for version control.
+- Hardware: A 64-bit Windows 11 personal computer with 32 GB of RAM.
+- Editor/IDE: Visual Studio Code for editing the Python code, with built-in terminals and testing/debug features.
 
 ### C3. Space-Time Complexity Using Big-O Notation
 - Main Algorithm (Nearest Neighbor Routing): O(n²) in the worst case for each truck route, because for n destinations, checking each unvisited location can lead to an O(n) step repeated up to n times.  
 - Dictionary-Based Lookups for Packages: O(1) average, O(n) worst-case for reads/writes.  
-- Overall Program: Each minute (up to 540 minutes from 08:00–17:00) may invoke these operations, but the critical bottleneck is the route construction. Thus, the effective complexity remains acceptable for a typical route size (under 50 packages).
+- Overall Program: Each minute (up to 540 minutes from 08:00–17:00) may invoke these operations, but the critical bottleneck is the route construction. The effective complexity remains acceptable for a typical route size (under 20 packages).
 
 ### C4. Scalability and Adaptability
 The solution scales by:
-- Incrementally adding more trucks or reorganizing packages without redesigning the core logic.  
-- Reusing the dictionary structure to store newly added packages.  
-- Adding or modifying the distance matrix for new cities in `WGUPS Distance Table.csv`.  
+- Incrementally adding more trucks and drivers or increasing daily package count without redesigning the core logic.
+- The custom hash-based data structures resize themselves to store new packages and trucks as the system scales, ensuring efficient lookups and minimal overhead.
+- Parsing manifests and tables programmatically, rather than hard-coding data.
 
-Because nearest-neighbor performance will degrade as n grows large, it may still be adapted by splitting deliveries into smaller sub-routes or integrating more advanced optimizations.
+While nearest-neighbor performance will degrade as n grows large, the truck capacity limits the max value of n to 16 per route, effectively splitting adversely complex routing problems into manageable sub-routes.
 
 ### C5. Software Efficiency and Maintainability
-- Efficiency: Fast lookups in dictionaries ensure minimal overhead. The time-managed simulation in `time_sim.py` reduces duplication by precomputing states.
-- Maintainability: Clear separation of responsibilities—data parsing in `parser.py`, distribution logic in `distributor.py`, and time simulation in `time_sim.py`—makes updates straightforward. Comments in code further facilitate understanding.
+#### Efficiency
+- Fast lookups in hash tables ensure minimal overhead.
+- The time-managed simulation in `time_sim.py` reduces duplication and error proclivity by precomputing states.
+#### Maintainability
+- Clear separation of responsibilities—data parsing in `parser.py`, package distribution in `distributor.py`, time simulation in `time_sim.py`, etc.—makes updates straightforward.
+- Breaking complex logic into many small, reusable functions enhances maintainability and readability, allowing for easier debugging and testing.
+- Well-placed and informative comments throughout the codebase further enhance comprehension and facilitate smoother collaboration among developers.
 
 ### C6. Self-Adjusting Data Structures
 Strengths:  
-- Python dictionaries automatically manage collisions using a hashing scheme, scaling well on average.  
-- Insertion, deletion, and lookups often perform in O(1).  
+- Custom hash tables automatically manage collisions using a self-adjusting hashing scheme, scaling well on average.
+- Insertion, deletion, and lookups often perform in O(1) due to efficient collision handling and dynamic resizing.
 Weaknesses:  
-- Worst-case collisions can degrade performance to O(n).  
-- Hashing requires good distribution for efficiency; poor hashing or excessive collisions slow performance.
+- Worst-case collisions can degrade performance to O(n) if the hash table becomes too crowded.
+- Hashing requires good distribution for efficiency; poor hashing or excessive collisions can slow performance.
 
 ### C7. Data Key
-We use “package ID” as the dictionary key because:  
-- Each package’s ID is unique, avoiding collisions for lookups.  
-- Consistent lookups are needed to track the lifecycle of each package, and referencing by a unique ID ensures accurate updates.
+We use “package ID” as the key for efficient delivery management because:
+- Each package’s ID is unique, ensuring there are no collisions during lookups.
+- Using a unique ID allows for consistent and accurate tracking of each package's lifecycle, from intake to delivery.
+- The unique ID simplifies the process of updating package statuses and locations, ensuring that each package can be individually managed without ambiguity.
 
 ## D. Sources
 All code is original to this repository. External references for background:  

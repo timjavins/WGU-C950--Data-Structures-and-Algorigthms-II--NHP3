@@ -1,3 +1,24 @@
+"""
+This module contains functions for simulating time-based events in the package delivery environment.
+
+A highlight of this module is the creation and storage of hash tables for every minute of the simulation.
+
+Functions
+---------
+calculate_time(minutes_after_8am)
+    Calculates the current time based on the number of minutes after 8:00 AM.
+
+calculate_minutes(current_time_str)
+    Calculates the number of minutes after 8:00 AM based on the current time.
+
+generate_time_list()
+    Generates a list of all times from 08:00 to 17:00 in one-minute increments.
+
+precompute_simulation_states(all_packages, trucks, distances, graph, algo)
+    Precomputes the states of all packages and trucks at each time from 08:00 to 17:00.
+    Creates hash tables for all packages and trucks at each minute of the simulation.
+"""
+
 from datetime import datetime, timedelta
 from router.distributor import Distributor
 from router.package_handler import intake_packages, prioritize_packages
@@ -9,11 +30,23 @@ def calculate_time(minutes_after_8am):
     """
     Calculates the current time based on the number of minutes after 8:00 AM.
     
-    Parameters:
-    minutes_after_8am (int): The number of minutes after 8:00 AM.
+    Parameters
+    ----------
+    minutes_after_8am : int
+        The number of minutes after 8:00 AM.
     
-    Returns:
-    tuple: A tuple containing the current time in 24-hour format (HH:MM) and the minutes passed.
+    Returns
+    -------
+    tuple
+        A tuple containing the current time in 24-hour format (HH:MM) and the minutes passed.
+
+    Space Complexity
+    ---------------
+        O(1)
+
+    Time Complexity
+    ---------------
+        O(1)
     """
     # Define the start time as 8:00 AM
     start_time = datetime.strptime("08:00", "%H:%M")
@@ -30,11 +63,23 @@ def calculate_minutes(current_time_str):
     """
     Calculates the number of minutes after 8:00 AM based on the current time.
     
-    Parameters:
-    current_time_str (str): The current time in 24-hour format (HH:MM).
+    Parameters
+    ----------
+    current_time_str : str
+        The current time in 24-hour format (HH:MM).
     
-    Returns:
-    int: The number of minutes after 8:00 AM.
+    Returns
+    -------
+    int
+        The number of minutes after 8:00 AM.
+
+    Space Complexity
+    ---------------
+        O(1)
+
+    Time Complexity
+    ---------------
+        O(1)
     """
     # Define the start time as 8:00 AM
     start_time = datetime.strptime("08:00", "%H:%M")
@@ -57,8 +102,18 @@ def generate_time_list():
     """
     Generates a list of all times from 08:00 to 17:00 in one-minute increments.
     
-    Returns:
-    list: A list of times in 24-hour format (HH:MM) from 08:00 to 17:00.
+    Returns
+    -------
+    list
+        A list of times in 24-hour format (HH:MM) from 08:00 to 17:00.
+
+    Space Complexity
+    ---------------
+        O(n)
+
+    Time Complexity
+    ---------------
+        O(n)
     """
     start_time = datetime.strptime("08:00", "%H:%M")
     end_time = datetime.strptime("17:00", "%H:%M")
@@ -75,27 +130,51 @@ def precompute_simulation_states(all_packages, trucks, distances, graph, algo):
     """
     Precomputes the states of all packages and trucks at each time from 08:00 to 17:00.
     
-    Parameters:
-    packages (list): The list of packages.
-    trucks (list): The list of trucks.
+    Parameters
+    ----------
+    all_packages : list
+        The list of packages.
+    trucks : list
+        The list of trucks.
+    distances : dict
+        The dictionary containing distances between locations.
+    graph : dict
+        The graph representation of the delivery locations.
+    algo : function
+        The algorithm used for routing.
     
-    Returns:
-    dict: A dictionary where keys are times in 24-hour format (HH:MM) and values are Minute objects.
+    Returns
+    -------
+    dict
+        A dictionary where keys are times in 24-hour format (HH:MM) and values are Minute objects.
+
+    Space Complexity
+    ---------------
+        O(n)
+
+    Time Complexity
+    ---------------
+        O(n)
     """
     time_list = generate_time_list()
     simulation_states = {}
     packages = prioritize_packages(all_packages)
-    with open("simulation_states.txt", "w") as file:
-        file.write("")  # Clear the file before writing new data
-        file.close()
-    with open("simulation_states.txt", "a") as file:
-        file.write("distances:\n{}\n".format(distances))
 
-    # Distribute packages into the trucks using the Distributor class
+    # Instantiate the Distributor class in order to use it to distribute packages to trucks
     distributor = Distributor(trucks)
     
     # Simulate the state of packages and trucks at the given times
     for time in time_list:
+        if time == "10:20":
+            for package in packages:
+                if package.pid == "9":
+                    package.notes = "Address updated at 10:20"
+                    package.address = "410 S State St"
+                    package.city = "Salt Lake City"
+                    package.state = "UT"
+                    package.zip_code = "84111"
+                    package.destination = 19
+                    break
         # Iterate through the packages and get the next flight time
         next_flight_time = None
         arrival_times = []
@@ -111,18 +190,7 @@ def precompute_simulation_states(all_packages, trucks, distances, graph, algo):
         distributor.distribute_packages(pkgs, time, next_flight_time, late_packages, distances, graph, algo)
         for truck in trucks:
             truck.update_position(time)
-        # write the state of the packages and trucks to a text file
-        with open("simulation_states.txt", "a") as file:
-            file.write(f"Time: {time}\n")
-            file.write("Trucks:\n")
-            for truck in trucks:
-                package_ids = [package.pid for package in truck.packages]
-                file.write(f"Truck ID: {truck.truck_id}, Packages: {package_ids}\n")
-                file.write(f"Current Location: {truck.current_location}, Mile Marker: {truck.mile_marker}, Trip Minutes: {truck.trip_minutes}\n")
-                file.write(f"Log: {truck.travel_log}\n")
-                file.write(f"Route: {truck.route}\n")
-            file.write("\n")
-        package_table = PackageHashTable()
+        package_table = PackageHashTable() # Create a new hash table for packages
         for pkg in packages:
             package_table.insert(
                 pkg.pid,
@@ -143,7 +211,7 @@ def precompute_simulation_states(all_packages, trucks, distances, graph, algo):
                 pkg.delivery_time,
                 pkg.timely
             )
-        truck_table = TruckHashTable()
+        truck_table = TruckHashTable() # Create a new hash table for trucks
         for truck in trucks:
             package_ids = [pkg.pid for pkg in truck.packages]  # Extract only the package IDs
             truck_table.insert(
@@ -160,20 +228,6 @@ def precompute_simulation_states(all_packages, trucks, distances, graph, algo):
                 truck.mile_marker,
                 truck.total_time
             )
-        # Write the package and truck hash tables to a text file
-        with open("simulation_states.txt", "a") as file:
-            file.write("Package Hash Table:\n")
-            for i in range(package_table.size):
-                if package_table.table[i]:
-                    for item in package_table.table[i]:
-                        file.write(f"{item}\n")
-            file.write("\n")
-            file.write("Truck Hash Table:\n")
-            for i in range(truck_table.size):
-                if truck_table.table[i]:
-                    for item in truck_table.table[i]:
-                        file.write(f"{item}\n")
-            file.write("\n")
 
         # Create a Minute object and store it in the simulation_states dictionary
         simulation_states[time] = Minute(time, package_table, truck_table)

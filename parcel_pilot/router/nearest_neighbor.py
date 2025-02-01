@@ -1,17 +1,38 @@
+"""
+This module contains the nearest neighbor algorithm for determining the delivery route based on a list of destinations.
+
+Functions
+---------
+nearest_neighbor_algorithm(start_location, destinations_list, distances)
+    Determines the order of package deliveries using the nearest neighbor algorithm.
+"""
+
 def nearest_neighbor_algorithm(start_location, destinations_list, distances):
     """
-    Determines the order of package deliveries using the nearest neighbor algorithm.
+    Determines the order of stops on the route using the nearest neighbor algorithm.
 
-    Parameters:
-    start_location (str): The starting location (e.g., the hub).
-    packages (list): The list of packages to be delivered.
-    distances (dict): The dictionary containing distances between locations.
-    map_locations_reverse (dict): The dictionary mapping addresses to location destinations.
+    Parameters
+    ----------
+    start_location : str
+        The starting location (e.g., the hub).
+    destinations_list : list
+        The list of destinations to be visited.
+    distances : dict
+        The dictionary containing distances between locations.
 
-    Returns:
-    list: The ordered list of package deliveries.
+    Returns
+    -------
+    tuple
+        A tuple containing the total distance, total time, and the ordered list of package deliveries.
+
+    Space Complexity
+    ---------------
+        O(n)
+
+    Time Complexity
+    ---------------
+        O(n^2)
     """
-
     # Initialize the current location to the start location
     current_location = start_location
     route = []
@@ -45,8 +66,5 @@ def nearest_neighbor_algorithm(start_location, destinations_list, distances):
 
     total_time = total_distance / 0.3
     full_route = [total_distance, total_time], route
-
-    with open("routing.txt", "a") as file:
-        file.write(f"Start location: {start_location} | Destinations list: {destinations_list} | Route: {full_route}\n")
 
     return full_route

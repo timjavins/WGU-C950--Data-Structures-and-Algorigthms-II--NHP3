@@ -1,6 +1,40 @@
+"""
+This module contains the implementation of Dijkstra's algorithm for finding the shortest path in a graph.
+
+Functions
+---------
+dijkstra(graph, initial_node, destinations)
+    Determines the shortest path from the initial node to the given destinations using Dijkstra's algorithm.
+"""
+
 import heapq
 
 def dijkstra(graph, initial_node, destinations):
+    """
+    Determines the shortest path from the initial node to the given destinations using Dijkstra's algorithm.
+
+    Parameters
+    ----------
+    graph : object
+        The graph representation containing edges and weights.
+    initial_node : str or int
+        The starting node identifier.
+    destinations : list
+        The list of destination nodes to be reached.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the total distance, total time, and the ordered list of paths to each destination.
+
+    Space Complexity
+    ---------------
+        O(n)
+
+    Time Complexity
+    ---------------
+        O(n^2)
+    """
     # Ensure initial is a single node identifier
     if isinstance(initial_node, list) or isinstance(initial_node, tuple):
         initial = initial_node[0]  # Use the node ID as the identifier
@@ -67,6 +101,5 @@ def dijkstra(graph, initial_node, destinations):
             file.write(f"Node: {node}, Path: {shortest_paths[node]}\n")
         file.write(f"Total distance: {total_distance}, Total time: {total_time}\n")
         file.write(f"Route: {route}\n")
-        file.write(f"Returned: {[total_distance, total_time], route}\n")
 
-    return [[total_distance, total_time], route]
+    return total_distance, total_time, route

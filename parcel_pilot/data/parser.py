@@ -1,4 +1,22 @@
-# parser.py
+"""
+This module contains the DataParser class for parsing CSV files and creating data structures for the package delivery simulation.
+
+Classes
+-------
+DataParser
+    A class that parses CSV files and creates data structures for the package delivery simulation.
+
+Functions
+---------
+parse_distance_table(file_path)
+    Parses the distance table CSV file and creates a graph representation of the delivery locations.
+
+create_graph_from_distances()
+    Creates a graph representation of the delivery locations based on the parsed distance table.
+
+parse_package_file(file_path)
+    Parses the package file CSV and inserts package data into the package hash table.
+"""
 
 import csv
 from data.package_hash import PackageHashTable
@@ -7,7 +25,29 @@ from data.packages import Package
 from data.graph import Graph
 
 class DataParser:
+    """
+    A class that parses CSV files and creates data structures for the package delivery simulation.
+
+    Attributes
+    ----------
+    distances : dict
+        A dictionary containing distances between locations.
+    locations : list
+        A list of delivery locations.
+    map_locations : dict
+        A dictionary mapping location names to their indices.
+    map_locations_reverse : dict
+        A dictionary mapping indices to location names.
+    packages : PackageHashTable
+        A hash table for storing package data.
+    graph : Graph
+        A graph representation of the delivery locations.
+    """
+
     def __init__(self):
+        """
+        Initializes the DataParser with empty data structures.
+        """
         self.distances = {}
         self.locations = []
         self.map_locations = {}
@@ -16,6 +56,26 @@ class DataParser:
         self.graph = None
 
     def parse_distance_table(self, file_path):
+        """
+        Parses the distance table CSV file and creates a graph representation of the delivery locations.
+
+        Parameters
+        ----------
+        file_path : str
+            The path to the distance table CSV file.
+
+        Returns
+        -------
+        None
+
+        Space Complexity
+        ---------------
+            O(n)
+
+        Time Complexity
+        ---------------
+            O(n^2)
+        """
         with open(file_path, mode='r') as file:
             reader = csv.reader(file)
             self.locations = next(reader)[1:]  # Skip the first column header
@@ -33,6 +93,21 @@ class DataParser:
         self.create_graph_from_distances()
 
     def create_graph_from_distances(self):
+        """
+        Creates a graph representation of the delivery locations based on the parsed distance table.
+
+        Returns
+        -------
+        None
+
+        Space Complexity
+        ---------------
+            O(n)
+
+        Time Complexity
+        ---------------
+            O(n^2)
+        """
         graph = Graph()
         for location, distances in self.distances.items():
             for i, distance in enumerate(distances):
@@ -45,6 +120,26 @@ class DataParser:
         self.graph = graph
     
     def parse_package_file(self, file_path):
+        """
+        Parses the package file CSV and inserts package data into the package hash table.
+    
+        Parameters
+        ----------
+        file_path : str
+            The path to the package file CSV.
+    
+        Returns
+        -------
+        None
+    
+        Space Complexity
+        ---------------
+            O(n)
+    
+        Time Complexity
+        ---------------
+            O(n)
+        """
         with open(file_path, mode='r') as file:
             reader = csv.DictReader(file)
             for row in reader:
@@ -63,6 +158,22 @@ class DataParser:
                 )
     
     def initialize_packages(self):
+        """
+        Initializes the packages from the package hash table.
+    
+        Returns
+        -------
+        list
+            The list of initialized packages.
+    
+        Space Complexity
+        ---------------
+            O(n)
+    
+        Time Complexity
+        ---------------
+            O(n)
+        """
         packages = []
         for pid in range(self.packages.size):
             # Ignore empty buckets in the hash table
@@ -85,5 +196,5 @@ class DataParser:
                 except KeyError:
                     package.destination = None
                 packages.append(package)
-
+    
         return packages

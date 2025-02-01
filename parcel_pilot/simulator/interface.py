@@ -1,14 +1,63 @@
+"""
+This module contains utility functions for managing the graphical user interface (GUI) of both the Parcel Pilot dashboard and the time simulation.
+
+Functions
+---------
+center_window(window, width, height)
+    Centers the given window on the screen based on the specified width and height.
+
+position_time_simulator(root, sub_root)
+    Positions the TimeSimulatorUI window immediately above the InfoDisplayUI window.
+
+on_closing(root, sub_root)
+    Closes both the root and sub_root windows when one window is closed.
+"""
+
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog, font
 from simulator.time_sim import calculate_time, calculate_minutes
 import re
 
-class ChooseAlgo(simpledialog.Dialog):
+class ChooseAlgo(simpledialog.Dialog): # Currently bypassed
+    """
+    A dialog class for choosing between Dijkstra's algorithm and the Nearest Neighbor algorithm.
+
+    Methods
+    -------
+    body(master)
+        Creates the body of the dialog with a label.
+    buttonbox()
+        Creates the button box with options for Dijkstra's and Nearest Neighbor algorithms.
+    use_dijkstra()
+        Sets the result to "dijkstra" and closes the dialog.
+    use_nearest_neighbor()
+        Sets the result to "nearest neighbor" and closes the dialog.
+    """
+
     def body(self, master):
+        """
+        Creates the body of the dialog with a label.
+
+        Parameters
+        ----------
+        master : tk.Tk
+            The master widget.
+
+        Returns
+        -------
+        None
+        """
         tk.Label(master, text="Choose Algorithm").grid(row=0, column=0, columnspan=2)
         return None
 
     def buttonbox(self):
+        """
+        Creates the button box with options for Dijkstra's and Nearest Neighbor algorithms.
+
+        Returns
+        -------
+        None
+        """
         box = tk.Frame(self)
 
         self.dijkstra_button = tk.Button(box, text="Dijkstra's", width=10, command=self.use_dijkstra)
@@ -20,15 +69,76 @@ class ChooseAlgo(simpledialog.Dialog):
         box.pack()
 
     def use_dijkstra(self):
+        """
+        Sets the result to "dijkstra" and closes the dialog.
+
+        Returns
+        -------
+        None
+        """
         self.result = "dijkstra"
         self.destroy()
 
     def use_nearest_neighbor(self):
+        """
+        Sets the result to "nearest neighbor" and closes the dialog.
+
+        Returns
+        -------
+        None
+        """
         self.result = "nearest neighbor"
         self.destroy()
 
 class InfoDisplayUI:
+    """
+    A class for displaying the state of packages and trucks in the simulation.
+
+    Attributes
+    ----------
+    root : tk.Tk
+        The root window of the Tkinter application.
+    time_simulator : TimeSimulator
+        The time simulator object.
+    simulation_states : dict
+        The dictionary containing simulation states for each minute.
+    time_label : ttk.Label
+        The label displaying the current time.
+    package_frame : ttk.Frame
+        The frame containing the package information display.
+    package_tree : ttk.Treeview
+        The tree view displaying package information.
+    truck_frame : ttk.Frame
+        The frame containing the truck information display.
+    truck_tree : ttk.Treeview
+        The tree view displaying truck information.
+    summary_frame : ttk.Frame
+        The frame containing the summary information display.
+    progress_bar : ttk.Progressbar
+        The progress bar showing the delivery progress.
+    progress_label : ttk.Label
+        The label displaying the delivery progress.
+    on_time_percentage_label : ttk.Label
+        The label displaying the on-time delivery percentage.
+    total_miles_label : ttk.Label
+        The label displaying the total miles traveled.
+    score_label : ttk.Label
+        The label displaying the score.
+    """
+
     def __init__(self, root, time_simulator, simulation_states):
+        """
+        Initializes the InfoDisplayUI with the given root, time simulator, and simulation states.
+
+        Parameters
+        ----------
+        root : tk.Tk
+            The root window of the Tkinter application.
+        time_simulator : TimeSimulator
+            The time simulator object.
+        simulation_states : dict
+            The dictionary containing simulation states for each minute.
+        """
         self.root = root
         self.time_simulator = time_simulator
         self.simulation_states = simulation_states
@@ -95,6 +205,17 @@ class InfoDisplayUI:
         self.adjust_column_widths(self.truck_tree)
 
     def update_time(self):
+        """
+        Updates the current time display and the simulation state.
+
+        Space Complexity
+        ---------------
+            O(1)
+
+        Time Complexity
+        ---------------
+            O(n)
+        """
         if not self.time_simulator.is_editing: # This should not run when the user is editing the time input
             simulation_state = None
             current_time = self.time_simulator.get_current_time()
@@ -107,8 +228,18 @@ class InfoDisplayUI:
         """
         Updates the display with the given simulation state.
         
-        Parameters:
-        simulation_state (Minute): The simulation state containing the states of packages and trucks.
+        Parameters
+        ----------
+        simulation_state : Minute
+            The simulation state containing the states of packages and trucks.
+
+        Space Complexity
+        ---------------
+            O(n)
+
+        Time Complexity
+        ---------------
+            O(n)
         """
         # Clear the current display
         for item in self.package_tree.get_children():
@@ -123,6 +254,22 @@ class InfoDisplayUI:
         self.update_summary_info(simulation_state)
 
     def populate_package_info(self, package_hash):
+        """
+        Populates the package information display with the given package hash table.
+        
+        Parameters
+        ----------
+        package_hash : PackageHashTable
+            The hash table containing package information.
+
+        Space Complexity
+        ---------------
+            O(n)
+
+        Time Complexity
+        ---------------
+            O(n)
+        """
         indices = 0
         package_list = []
         for bucket in package_hash.table:
@@ -155,6 +302,22 @@ class InfoDisplayUI:
             indices += 1
     
     def populate_truck_info(self, truck_hash):
+        """
+        Populates the truck information display with the given truck hash table.
+        
+        Parameters
+        ----------
+        truck_hash : TruckHashTable
+            The hash table containing truck information.
+
+        Space Complexity
+        ---------------
+            O(n)
+
+        Time Complexity
+        ---------------
+            O(n)
+        """
         indices = 0
         truck_list = []
         for bucket in truck_hash.table:
@@ -189,6 +352,22 @@ class InfoDisplayUI:
             indices += 1
 
     def update_summary_info(self, simulation_state):
+        """
+        Updates the summary information display with the given simulation state.
+        
+        Parameters
+        ----------
+        simulation_state : Minute
+            The simulation state containing the states of packages and trucks.
+    
+        Space Complexity
+        ---------------
+            O(n)
+    
+        Time Complexity
+        ---------------
+            O(n)
+        """
         total_miles = sum(truck_data['total_distance'] for bucket in simulation_state.trucks.table if bucket for truck_id, truck_data in bucket)
         total_miles = round(total_miles, 2)
         total_packages = sum(1 for package_list in simulation_state.packages.table if package_list for package in package_list)
@@ -197,15 +376,39 @@ class InfoDisplayUI:
         on_time_percentage = (delivered_on_time / total_delivered * 100) if total_delivered > 0 else 0
         on_time_percentage = round(on_time_percentage, 2)
         score = round(((total_delivered + delivered_on_time) / (total_packages * 2) * 100), 2)
-
-        self.score_label.config(text=f"Score: {score}%")
-        self.on_time_percentage_label.config(text=f"On-Time Delivery: {on_time_percentage:.2f}%")
-        self.progress_label.config(text=f"Progress: {total_delivered}/{total_packages} packages delivered")
+    
+        self.score_label.config(text=f"Score: {score}%", width=20, anchor='w')
+        self.on_time_percentage_label.config(text=f"On-Time Delivery: {on_time_percentage:.2f}%", width=22, anchor='w')
+        self.progress_label.config(text=f"Progress: {total_delivered}/{total_packages} packages delivered", width=30, anchor='w')
+        self.total_miles_label.config(text=f"Total Miles: {total_miles}", width=20, anchor='w')
         # progress bar
-        self.progress_bar['value'] = total_delivered/total_packages * 100
-        self.total_miles_label.config(text=f"Total Miles: {total_miles}")
+        self.progress_bar.config(length=300)
+        self.progress_bar['value'] = total_delivered / total_packages * 100
+    
+        # Ensure labels are aligned to the left with padding
+        self.score_label.pack(anchor='w', padx=10)
+        self.on_time_percentage_label.pack(anchor='w', padx=10)
+        self.progress_label.pack(anchor='w', padx=10)
+        self.total_miles_label.pack(anchor='w', padx=10)
+        self.progress_bar.pack(anchor='w', padx=10)
 
     def adjust_column_widths(self, tree):
+        """
+        Adjusts the column widths of the given tree view to fit the content.
+
+        Parameters
+        ----------
+        tree : ttk.Treeview
+            The tree view whose column widths need to be adjusted.
+
+        Space Complexity
+        ---------------
+            O(n)
+
+        Time Complexity
+        ---------------
+            O(n)
+        """
         for col in tree["columns"]:
             max_width = font.Font().measure(col)
             for item in tree.get_children():
@@ -214,16 +417,68 @@ class InfoDisplayUI:
             tree.column(col, width=max_width)
     
     def format_time(self, minutes):
+        """
+        Converts the given time in minutes to a string in hours and minutes format.
+
+        Parameters
+        ----------
+        minutes : int
+            The time in minutes.
+
+        Returns
+        -------
+        str
+            The formatted time string in hours and minutes.
+
+        Space Complexity
+        ---------------
+            O(1)
+
+        Time Complexity
+        ---------------
+            O(1)
+        """
         hours = minutes // 60
         minutes = minutes % 60
         return f"{hours} hr, {minutes} min"
 
 class TimeSimulatorUI:
+    """
+    A class for simulating and displaying time-based events in the package delivery system.
+
+    Attributes
+    ----------
+    root : tk.Tk
+        The root window of the Tkinter application.
+    is_editing : bool
+        Flag to track if the user is editing the time input.
+    time_update_callback : function
+        Instance variable to store the callback function for time updates.
+    simulation_states : dict
+        The dictionary containing precomputed simulation states for each minute.
+    slider : ttk.Scale
+        The slider for selecting the time in minutes.
+    time_var : tk.StringVar
+        The variable for storing the current time as a string.
+    time_input : ttk.Entry
+        The entry widget for displaying and editing the current time.
+    """
+
     def __init__(self, root, simulation_states):
+        """
+        Initializes the TimeSimulatorUI with the given root and simulation states.
+
+        Parameters
+        ----------
+        root : tk.Tk
+            The root window of the Tkinter application.
+        simulation_states : dict
+            The dictionary containing precomputed simulation states for each minute.
+        """
         self.root = root
         self.root.title("Time Simulator")
-        self.is_editing = False # Flag to track if the user is editing the time input
-        self.time_update_callback = None # Instance variable to store the callback function
+        self.is_editing = False  # Flag to track if the user is editing the time input
+        self.time_update_callback = None  # Instance variable to store the callback function
         self.simulation_states = simulation_states  # Store the precomputed simulation states
 
         # Slider
@@ -241,31 +496,129 @@ class TimeSimulatorUI:
         # Initialize the display
         self.update_time(0)
 
-    # Set the callback function for time updates
     def set_time_update_callback(self, callback):
+        """
+        Sets the callback function for time updates.
+
+        Parameters
+        ----------
+        callback : function
+            The callback function to be called on time updates.
+
+        Returns
+        -------
+        None
+        """
         self.time_update_callback = callback
 
     def update_time(self, value):
+        """
+        Updates the current time display based on the slider value.
+
+        Parameters
+        ----------
+        value : float
+            The value of the slider representing the number of minutes passed since 08:00 AM.
+
+        Returns
+        -------
+        None
+
+        Space Complexity
+        ---------------
+            O(1)
+
+        Time Complexity
+        ---------------
+            O(1)
+        """
         minutes_passed = int(float(value))
         current_time, _ = calculate_time(minutes_passed)
         self.time_var.set(current_time)
         if self.time_update_callback:
-            self.time_update_callback() # Send the new time to other methods
+            self.time_update_callback()  # Send the new time to other methods
 
     def get_current_time(self):
+        """
+        Gets the current time from the time input.
+
+        Returns
+        -------
+        str
+            The current time in 24-hour format (HH:MM).
+
+        Space Complexity
+        ---------------
+            O(1)
+
+        Time Complexity
+        ---------------
+            O(1)
+        """
         return self.time_var.get()
 
     def on_focus_in(self, event):
+        """
+        Handles the focus-in event for the time input.
+
+        Parameters
+        ----------
+        event : tk.Event
+            The event object.
+
+        Returns
+        -------
+        None
+        """
         self.is_editing = True  # Set flag to True when editing starts
         self.time_input.selection_range(0, tk.END)
 
     def on_focus_out(self, event):
+        """
+        Handles the focus-out event for the time input.
+
+        Parameters
+        ----------
+        event : tk.Event
+            The event object.
+
+        Returns
+        -------
+        None
+        """
         self.validate_and_update_time()
 
     def on_enter(self, event):
+        """
+        Handles the enter key event for the time input.
+
+        Parameters
+        ----------
+        event : tk.Event
+            The event object.
+
+        Returns
+        -------
+        None
+        """
         self.validate_and_update_time()
 
     def validate_and_update_time(self):
+        """
+        Validates and updates the time input.
+
+        Returns
+        -------
+        None
+
+        Space Complexity
+        ---------------
+            O(1)
+
+        Time Complexity
+        ---------------
+            O(1)
+        """
         time_str = self.time_input.get()
         # Validate the input format
         if re.match(r'^\d{4}$', time_str) or re.match(r'^\d{2}:\d{2}$', time_str):
@@ -282,35 +635,101 @@ class TimeSimulatorUI:
             self.update_time(self.slider.get())
         self.is_editing = False  # Set flag back to False when editing ends
         if self.time_update_callback:
-            self.time_update_callback() # Send the new time to other functions
+            self.time_update_callback()  # Send the new time to other functions
 
     def get_simulation_state(self, time_str):
         """
-        Allows passing the precomputed simulation state for the given time to other methods.
+        Gets the precomputed simulation state for the given time.
 
-        Parameters:
-        time_str (str): The time in 24-hour format (HH:MM).
+        Parameters
+        ----------
+        time_str : str
+            The time in 24-hour format (HH:MM).
 
-        Returns:
-        dict: The simulation state for the given time.
+        Returns
+        -------
+        dict
+            The simulation state for the given time.
+
+        Space Complexity
+        ---------------
+            O(1)
+
+        Time Complexity
+        ---------------
+            O(1)
         """
-        return self.simulation_states[time_str]
+        return self.simulation_states.get(time_str)
 
 def center_window(window, width, height):
+    """
+    Centers the given window on the screen based on the specified width and height.
+
+    Parameters
+    ----------
+    window : tk.Tk or tk.Toplevel
+        The window to be centered.
+    width : int
+        The width of the window.
+    height : int
+        The height of the window.
+
+    Space Complexity
+    ---------------
+        O(1)
+
+    Time Complexity
+    ---------------
+        O(1)
+    """
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
     x = (screen_width // 2) - (width // 2)
     y = (screen_height // 2) - (height // 2)
     window.geometry(f'{width}x{height}+{x}+{y}')
 
-# Position the TimeSimulatorUI (sub_root) window immediately above the InfoDisplayUI (root) window
 def position_time_simulator(root, sub_root):
+    """
+    Positions the TimeSimulatorUI window immediately above the InfoDisplayUI window.
+
+    Parameters
+    ----------
+    root : tk.Tk
+        The root window of the InfoDisplayUI.
+    sub_root : tk.Toplevel
+        The sub window of the TimeSimulatorUI.
+
+    Space Complexity
+    ---------------
+        O(1)
+
+    Time Complexity
+    ---------------
+        O(1)
+    """
     x = screen_width = sub_root.winfo_screenwidth() // 2 - sub_root.winfo_width() // 2
     root_y = root.winfo_y() - sub_root.winfo_height() - 31
     sub_root.geometry(f'+{x}+{root_y}')
 
-# Close both windows when one window is closed
 def on_closing(root, sub_root):
+    """
+    Closes both the root and sub_root windows when one window is closed.
+
+    Parameters
+    ----------
+    root : tk.Tk
+        The root window of the InfoDisplayUI.
+    sub_root : tk.Toplevel
+        The sub window of the TimeSimulatorUI.
+
+    Space Complexity
+    ---------------
+        O(1)
+
+    Time Complexity
+    ---------------
+        O(1)
+    """
     try:
         root.destroy()
     except tk.TclError:

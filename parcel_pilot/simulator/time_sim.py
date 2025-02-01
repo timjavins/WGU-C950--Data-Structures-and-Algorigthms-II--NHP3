@@ -1,11 +1,9 @@
 from datetime import datetime, timedelta
 from router.distributor import Distributor
-from data.trucks import TruckManager, Truck
 from router.package_handler import intake_packages, prioritize_packages
 from simulator.minutes import Minute
 from data.package_hash import PackageHashTable
 from data.truck_hash import TruckHashTable
-import copy
 
 def calculate_time(minutes_after_8am):
     """
@@ -73,7 +71,7 @@ def generate_time_list():
     
     return time_list
 
-def precompute_simulation_states(all_packages, trucks, distances, algo):
+def precompute_simulation_states(all_packages, trucks, distances, graph, algo):
     """
     Precomputes the states of all packages and trucks at each time from 08:00 to 17:00.
     
@@ -87,6 +85,11 @@ def precompute_simulation_states(all_packages, trucks, distances, algo):
     time_list = generate_time_list()
     simulation_states = {}
     packages = prioritize_packages(all_packages)
+    with open("simulation_states.txt", "w") as file:
+        file.write("")  # Clear the file before writing new data
+        file.close()
+    with open("simulation_states.txt", "a") as file:
+        file.write("distances:\n{}\n".format(distances))
 
     # Distribute packages into the trucks using the Distributor class
     distributor = Distributor(trucks)
@@ -105,7 +108,7 @@ def precompute_simulation_states(all_packages, trucks, distances, algo):
         if arrival_times:
             next_flight_time = min(arrival_times)
             late_packages = len([time for time in arrival_times if time == next_flight_time])
-        distributor.distribute_packages(pkgs, time, next_flight_time, late_packages, distances, algo)
+        distributor.distribute_packages(pkgs, time, next_flight_time, late_packages, distances, graph, algo)
         for truck in trucks:
             truck.update_position(time)
         # write the state of the packages and trucks to a text file

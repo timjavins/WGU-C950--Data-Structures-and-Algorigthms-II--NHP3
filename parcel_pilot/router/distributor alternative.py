@@ -86,6 +86,23 @@ class Distributor:
                 file.write(f"Package {package.pid}, priority {package.priority}, original {package.original} | ")
             file.write(f"\n")
 
+        self.assign_by_group(packages)
+
+        # For packages with truck requirements, add them to the truck with the matching truck_id
+        for package in packages:
+            match = re.search(r'Can only be on truck (\d+)', package.notes)
+            if match:
+                truck_id = int(match.group(1))
+                self.buckets[truck_id].append(package)
+                self.bucket_destinations[truck_id].append(package.destination) if package.destination not in self.bucket_destinations[truck_id] else None
+                self.bucket_packages.add(package.pid)  # Mark package as added
+                if package.group:
+                    for pkg in packages:
+                        if pkg.pid != package.pid and pkg.pid not in self.bucket_packages:
+                            if pkg.group == package.group:
+                                self.buckets[truck_id].append(pkg)
+                                self.bucket_packages.add(pkg.pid)  # Mark package as added
+
         # Load packages into self.buckets by priority rank (1 being the first priority)
         for priority in range(1, self.highest_priority_number + 1):
             for package in packages:

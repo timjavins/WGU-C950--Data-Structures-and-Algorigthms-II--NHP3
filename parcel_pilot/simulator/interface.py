@@ -90,6 +90,9 @@ class InfoDisplayUI:
 
         # Populate the information
         self.update_time()
+        # Adjust column widths to fit content initially
+        self.adjust_column_widths(self.package_tree)
+        self.adjust_column_widths(self.truck_tree)
 
     def update_time(self):
         if not self.time_simulator.is_editing: # This should not run when the user is editing the time input
@@ -118,9 +121,6 @@ class InfoDisplayUI:
         self.populate_truck_info(simulation_state.trucks)
         # Update the summary information
         self.update_summary_info(simulation_state)
-        # Adjust column widths to fit content
-        self.adjust_column_widths(self.package_tree)
-        self.adjust_column_widths(self.truck_tree)
 
     def populate_package_info(self, package_hash):
         indices = 0

@@ -21,7 +21,7 @@ class Distributor:
         self.bucket_packages = set() # Track which packages were already added to buckets to avoid duplicates
         self.packages = set() # To track which packages have not yet been distributed
 
-    def distribute_packages(self, all_packages, time_string, next_flight_time, late_packages, distances, algo):
+    def distribute_packages(self, all_packages, time_string, next_flight_time, late_packages, distances, graph, algo):
         with open("distributor.txt", "a") as file:
             file.write(f"Package objects at {time_string}: {all_packages}\n")
             file.write(f"all_packages: {[package.pid for package in all_packages]}\n")
@@ -89,7 +89,7 @@ class Distributor:
         with open("distributor.txt", "a") as file:
             file.write("==================ROUTING==================\n")
 
-        self.process_buckets(distances, algo, time)
+        self.process_buckets(distances, graph, algo, time)
 
     def initialize(self, all_packages):
             self.packages = sorted(set(package.pid for package in all_packages))
@@ -169,7 +169,7 @@ class Distributor:
             with open("distributor.txt", "a") as file:
                 file.write(f"Package {package.pid} was already added to a bucket.\n")
 
-    def process_buckets(self, distances, algo, time):
+    def process_buckets(self, distances, graph, algo, time):
         for truck_id, bucket in self.buckets.items():
             if not self.trucks[truck_id].current_location == 0: # Don't process the bucket for the truck if not at location 0
                 with open("distributor.txt", "a") as file:
@@ -189,12 +189,12 @@ class Distributor:
                 with open("distributor.txt", "a") as file:
                     file.write(f"====================Routing for truck {truck_id}====================\n")
 
-                if self.process_groups(bucket, truck_id, distances, algo, time):
+                if self.process_groups(bucket, truck_id, distances, graph, algo, time):
                     continue
 
-                self.process_ungrouped(bucket, truck_id, distances, algo, time)
+                self.process_ungrouped(bucket, truck_id, distances, graph, algo, time)
 
-    def process_groups(self, bucket, truck_id, distances, algo, time):
+    def process_groups(self, bucket, truck_id, distances, graph, algo, time):
         # For one priority level at a time, check if they have a package.group, group them with the same group, send them out
         for priority in range(1, self.highest_priority_number + 1):
             for package in bucket:
@@ -206,13 +206,13 @@ class Distributor:
                         group_packages += [pkg for pkg in bucket if pkg.destination in destinations] # Add all packages that match the group's destinations
                         group_packages = set(group_packages) # Ensure there are no duplicates
                         # Get the route for this group of packages
-                        route = self.get_route(group_packages, distances, algo, time)
+                        route = self.get_route(group_packages, distances, graph, algo, time)
                         # Send the packages out
                         self.send_it(group_packages, truck_id, route, time, distances)
                         return True
         return False
     
-    def process_ungrouped(self, bucket, truck_id, distances, algo, time):
+    def process_ungrouped(self, bucket, truck_id, distances, graph, algo, time):
         queue = []
         for priority in range(1, self.highest_priority_number + 1):
             for package in bucket:
@@ -229,10 +229,10 @@ class Distributor:
                 break
         with open("distributor.txt", "a") as file:
             file.write(f"{time} -- truck {truck_id} queue: {[package.pid for package in queue]}\n")
-        route = self.get_route(queue, distances, algo, time)
+        route = self.get_route(queue, distances, graph, algo, time)
         self.send_it(queue, truck_id, route, time, distances)
 
-    def get_route(self, packages, distances, algo, time):
+    def get_route(self, packages, distances, graph, algo, time):
         with open("routing.txt", "a") as file:
             file.write(f"{time}: Getting route for packages {[package.pid for package in packages]}\n")
         routes = {}
@@ -254,7 +254,7 @@ class Distributor:
             with open("routing.txt", "a") as file:
                 file.write(f"Destinations: {destinations}\n")
             if algo == "dijkstra":
-                route = dijkstra(previous_route_end, destinations, distances)
+                route = dijkstra(graph, previous_route_end, destinations)
             else:
                 route = nearest_neighbor_algorithm(previous_route_end, destinations, distances)
             # add the route to the routes dictionary with the priority as the key
@@ -275,7 +275,7 @@ class Distributor:
         final_route = [0, 0], []
         for priority in sorted(routes.keys()):
             full_route = routes[priority]
-            final_route[0][0] += full_route[0][0]  # sum total distances
+            final_route[0][0] += full_route[0][0]  # sum tota`l distances
             final_route[0][1] += full_route[0][1]  # sum total times
             final_route[1].extend(full_route[1])  # concatenate routes
         with open("routing.txt", "a") as file:

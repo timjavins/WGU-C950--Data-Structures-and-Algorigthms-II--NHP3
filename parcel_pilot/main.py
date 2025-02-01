@@ -1,13 +1,9 @@
 from data.parser import DataParser
-from router.package_handler import link_packages, group_linked_packages, prioritize_packages, intake_packages
+from router.package_handler import link_packages, group_linked_packages
 from simulator.interface import ChooseAlgo, TimeSimulatorUI, InfoDisplayUI, center_window, position_time_simulator, on_closing
 from data.trucks import TruckManager
-from router.distributor import Distributor
 import tkinter as tk
-from tkinter import messagebox
 from simulator.time_sim import precompute_simulation_states
-from data.packages import Package
-from router.nearest_neighbor import nearest_neighbor_algorithm
 
 # Create an instance of DataParser
 data_parser = DataParser()
@@ -21,6 +17,7 @@ distances = data_parser.distances
 locations = data_parser.locations
 map_locations = data_parser.map_locations
 map_locations_reverse = data_parser.map_locations_reverse
+graph = data_parser.graph
 packages = data_parser.initialize_packages()
 
 # Group the packages
@@ -29,10 +26,11 @@ grouped_packages = group_linked_packages(linked_packages, packages)
 
 # message box that allows the user to pick between Dijkstra's and Nearest Neighbor
 # Create a custom dialog to choose the algorithm
-mbox = tk.Tk()
-mbox.withdraw()  # Hide the root window
-dialog = ChooseAlgo(mbox)
-algo = dialog.result if dialog.result else "nearest neighbor"
+# mbox = tk.Tk()
+# mbox.withdraw()  # Hide the root window
+# dialog = ChooseAlgo(mbox)
+# algo = dialog.result if dialog.result else "nearest neighbor"
+algo = "nearest neighbor"
 
 # Create a TruckManager instance
 truck_manager = TruckManager()
@@ -43,7 +41,7 @@ truck_1 = truck_manager.get_truck(1)
 truck_2 = truck_manager.get_truck(2)
 trucks = [truck_0, truck_1, truck_2]
 
-simulation_states = precompute_simulation_states(packages, trucks, distances, algo)
+simulation_states = precompute_simulation_states(packages, trucks, distances, graph, algo)
 
 # Initialize and run the UI
 def main():

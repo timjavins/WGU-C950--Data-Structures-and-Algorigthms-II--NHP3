@@ -4,6 +4,7 @@ import csv
 from data.package_hash import PackageHashTable
 from helpers import find_partial_match, convert_to_24_hour_format, array_to_dict, reverse_dict
 from data.packages import Package
+from data.graph import Graph
 
 class DataParser:
     def __init__(self):
@@ -12,6 +13,7 @@ class DataParser:
         self.map_locations = {}
         self.map_locations_reverse = {}
         self.packages = PackageHashTable()
+        self.graph = None
 
     def parse_distance_table(self, file_path):
         with open(file_path, mode='r') as file:
@@ -28,7 +30,20 @@ class DataParser:
                     ]
                 except ValueError:
                     continue
+        self.create_graph_from_distances()
 
+    def create_graph_from_distances(self):
+        graph = Graph()
+        for location, distances in self.distances.items():
+            for i, distance in enumerate(distances):
+                if distance or distance == 0.0:  # Include zero distances
+                    neighbor = self.locations[i]
+                    graph.add_edge(location, neighbor, distance)
+                    # Ensure the neighbor node is also added to the graph
+                    if neighbor not in graph.edges:
+                        graph.add_edge(neighbor, location, distance)
+        self.graph = graph
+    
     def parse_package_file(self, file_path):
         with open(file_path, mode='r') as file:
             reader = csv.DictReader(file)

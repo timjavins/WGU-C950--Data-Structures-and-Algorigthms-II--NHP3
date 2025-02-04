@@ -62,7 +62,7 @@ Heap-Insert : O (logn)
 
 **if heap-size\[A\] \< 1**
 
-       **then error "heap underlfow"**
+       **then error "heap underflow"**
 
 **max ¬ A\[1\]**
 

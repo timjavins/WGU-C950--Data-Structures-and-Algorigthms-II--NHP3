@@ -90,6 +90,8 @@ class DataParser:
                     ]
                 except ValueError:
                     continue
+        print(self.distances)
+        print(self.locations)
         self.create_graph_from_distances()
 
     def create_graph_from_distances(self):

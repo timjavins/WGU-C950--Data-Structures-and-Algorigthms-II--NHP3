@@ -1,3 +1,4 @@
+# Timothy Javins (000698100)
 """
 The main Python file in the Parcel Pilot application orchestrates data parsing, object initialization, and user interface setup for simulating package delivery.
 
@@ -25,6 +26,11 @@ data_parser.parse_package_file('inputs/WGUPS Package File.csv')
 distances = data_parser.distances
 locations = data_parser.locations
 map_locations = data_parser.map_locations
+print("map locations:")
+print(map_locations)
+print("\n")
+print("locations:")
+print(locations)
 map_locations_reverse = data_parser.map_locations_reverse
 graph = data_parser.graph
 packages = data_parser.initialize_packages()
@@ -69,7 +75,7 @@ def main():
     sub_root = tk.Toplevel() # Create a sub window for the TimeSimulatorUI
     # Instantiate the main user interface components
     time_simulator = TimeSimulatorUI(sub_root, simulation_states)
-    dashboard = InfoDisplayUI(root, time_simulator, simulation_states)
+    dashboard = InfoDisplayUI(root, time_simulator, simulation_states, map_locations)
     # Center the InfoDisplayUI window
     root.update_idletasks()
     center_window(root, root.winfo_width(), root.winfo_height())

@@ -126,7 +126,7 @@ class InfoDisplayUI:
         The label displaying the score.
     """
 
-    def __init__(self, root, time_simulator, simulation_states):
+    def __init__(self, root, time_simulator, simulation_states, map_locations):
         """
         Initializes the InfoDisplayUI with the given root, time simulator, and simulation states.
 
@@ -142,6 +142,7 @@ class InfoDisplayUI:
         self.root = root
         self.time_simulator = time_simulator
         self.simulation_states = simulation_states
+        self.locations = map_locations
         self.root.title("Parcel Pilot Dashboard")
 
         # Set the callback mechanism for time updates
@@ -287,8 +288,8 @@ class InfoDisplayUI:
             deadline = item[5]
             timely = item[16]
             group = item[12]
-            destination = item[14]
-            location = item[11]
+            destination = self.location_lookup(item[14])
+            location = self.location_lookup(item[11])
             truck_id = item[10]
             notes = item[8]
             # mechanism for alternating row colors
@@ -332,6 +333,7 @@ class InfoDisplayUI:
             truck_id = item[0]
             truck_data = item[1]
             package_list = truck_data['packages']
+            last_location = self.location_lookup(truck_data['current_location'])
             package_ids = ", ".join(str(pkg_id) for pkg_id in package_list)  # Directly use pkg_id
             total_time = self.format_time(truck_data['total_time']) # Convert total time to hours and minutes
             total_distance = round(truck_data['total_distance'], 2)  # Round the total distance to 2 decimal places
@@ -343,13 +345,38 @@ class InfoDisplayUI:
                 values=(
                     truck_id,
                     package_ids,
-                    truck_data['current_location'],
+                    last_location,
                     total_distance,
                     total_time
                 ),
                 tags=(tag,)
             )
             indices += 1
+    
+    def location_lookup(self, location_id):
+        """
+        Looks up the location name based on the given location ID.
+        
+        Parameters
+        ----------
+        location_id : int
+            The location ID to look up.
+
+        Returns
+        -------
+        str
+            The name of the location corresponding to the given ID.
+
+        Space Complexity
+        ---------------
+            O(1)
+
+        Time Complexity
+        ---------------
+            O(1)
+        """
+        # Get the string up until the \n character
+        return self.locations[location_id].split('\n')[0] if location_id in self.locations else "vehicle"
 
     def update_summary_info(self, simulation_state):
         """

@@ -12,7 +12,7 @@ The purpose of this application is to efficiently and effectively route package 
 This application will use a “nearest neighbor” algorithm (a type of greedy approach) for routing. The nearest neighbor algorithm will first find the closest destination to the current location. When the closest destination is identified, it becomes the current location and is removed from the list of destinations. The process iterates sequentially through the list of destinations until all destinations are included in the route. This approach automatically makes routing decisions based on the current set of package destinations, making it suitable for the daily local deliveries problem.
 
 ## B. Data Structure Identification
-The application makes use of hash tables to record the states of all packages and trucks, every minute of the work day.
+The application will make use of hash tables to record the states of all packages and trucks, every minute of the work day.
 
 A hash-based structure (custom hash tables) will be featured throughout the codebase to store and retrieve package and truck data quickly. These hash tables perform key-based lookups efficiently on average, adjusting their underlying structure (hash buckets) to optimize for fast operations.
 
@@ -184,9 +184,18 @@ Below is a concise list of imported modules and packages across the files, along
 While the application will use no third-party libraries, there will be some imports from the Python Standard Library. The `datetime` module provides date and time manipulation via `datetime` and `timedelta` classes. The `re` module allows for regular expression matching and parsing, which is important for handling package requirements and time dynamics. The `csv` module enables reading and writing CSV-format data. The `tkinter` package is the Standard Python GUI toolkit for creating windows, dialogs, and other interface elements.
 
 ### C3. Space-Time Complexity Using Big-O Notation
-- Named Algorithm (Nearest Neighbor Routing): $O(n²)$ in the worst case for each truck route, because for n destinations, checking each unvisited location can lead to an $O(n)$ step repeated up to n times.  
-- Hash-Based Lookups for Packages: $O(1)$ average, $O(n)$ worst-case for reads/writes.  
-- Overall Program: Each minute (up to 540 minutes from 08:00–17:00) may invoke hash lookup operations, but only at the user's request. The worst-case writing and reading hash tables would be $O(M*n+u*n)$ where M = 540 minutes in the work day (creating hash tables) and u = the number of user lookup requests (reading hash tables). However, the critical bottleneck is the route construction at $O(n²)$. The effective complexity remains acceptable for a typical route size, which is under 20 packages.
+
+#### Time Complexity
+- **Named Algorithm (Nearest Neighbor Routing)**: The worst case for each truck route would be $O(n²)$ because for $n$ destinations, checking each unvisited location can lead to an $O(n)$ step repeated up to $n$ times. 
+- **Hash-Based Lookups for Packages**: The average for reads/writes would be $O(1)$ while the worst case would $O(n)$.
+- **Overall Program**: Each minute (540 pre-computed minutes from 08:00–17:00) may invoke hash lookup operations, but only at the user's request. Therefore, the worst-case writing and reading hash tables would be $O(M*n+u*n)$ where $M$ = 540 minutes in the work day (writing the hash tables) and $u$ = the number of user lookup requests (reading hash tables). However, the critical bottleneck is the route construction at $O(n²)$. Even though the **overall complexity is** $O(n²)$, the effective complexity remains acceptable for a typical route size, which will not exceed $O(16²)$ = $O(256)$ per route due to the capacity of each truck.
+
+#### Space Complexity
+- **Hash Tables for Packages**: Storing up to $n$ packages (and a set number of trucks) requires $O(n)$ space for package data, plus additional space for truck data. Because hash tables can expand or shrink as needed, their worst-case space is proportional to the total number of entries.
+- **Graph/Distance Table**: Representing the distance relationships between $n$ locations would require $O(n²)$ space when stored as a matrix. This space requirement can dominate the memory usage when routing among every pair of destinations.
+- **Per-Minute State**: Since the simulation records a state snapshot for each minute $M$ of the work day, for a total of 540 minutes, the worst-case storage will grow to $O(M×n)$.
+
+Hash-based storage for $n$ packages and a small, fixed number of trucks remains $O(n)$. Therefore, **the overall space complexity is** $O(n²)$ due to the adjacency matrix.
 
 ### C4. Scalability and Adaptability
 The solution scales by:
@@ -195,7 +204,7 @@ The solution scales by:
 - parsing manifests and tables programmatically, rather than hard-coding data, ensuring that any manifest or distances table will not require changes in the code.
 - employing the nearest neighbor algorithm, which will function for destination lists of all sizes, including lists for trucks with larger capacities, although with commensurate increases in runtime.
 
-While nearest-neighbor performance will degrade as n grows large, the current truck capacity limits the max value of n to 16 per route, effectively splitting adversely complex routing problems into manageable sub-routes.
+While nearest-neighbor performance will degrade as $n$ grows large, the current truck capacity limits the max value of $n$ to 16 per route, effectively splitting adversely complex routing problems into manageable sub-routes.
 
 ### C5. Software Efficiency and Maintainability
 #### Efficiency

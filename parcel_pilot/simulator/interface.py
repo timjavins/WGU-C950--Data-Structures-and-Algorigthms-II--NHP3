@@ -357,6 +357,7 @@ class InfoDisplayUI:
         # Insert package details into the text widget
         details_text = (
             f"Package ID: {package_details[0]}\n"
+            f"{self.location_lookup(package_details[14])}\n"
             f"Address: {package_details[1]}\n"
             f"City: {package_details[2]}\n"
             f"State: {package_details[3]}\n"

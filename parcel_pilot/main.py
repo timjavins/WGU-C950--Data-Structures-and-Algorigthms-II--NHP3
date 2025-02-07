@@ -26,11 +26,6 @@ data_parser.parse_package_file('inputs/WGUPS Package File.csv')
 distances = data_parser.distances
 locations = data_parser.locations
 map_locations = data_parser.map_locations
-print("map locations:")
-print(map_locations)
-print("\n")
-print("locations:")
-print(locations)
 map_locations_reverse = data_parser.map_locations_reverse
 graph = data_parser.graph
 packages = data_parser.initialize_packages()

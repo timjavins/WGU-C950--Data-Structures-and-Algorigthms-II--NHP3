@@ -187,7 +187,7 @@ While the application will use no third-party libraries, there will be some impo
 
 #### Time Complexity
 - **Named Algorithm (Nearest Neighbor Routing)**: The worst case for each truck route would be $O(n²)$ because for $n$ destinations, checking each unvisited location can lead to an $O(n)$ step repeated up to $n$ times. 
-- **Hash-Based Lookups for Packages**: The average for reads/writes would be $O(1)$ while the worst case would $O(n)$.
+- **Hash-Based Lookups for Packages**: The average for reads/writes would be $O(1)$ while the worst case would be $O(n)$.
 - **Overall Program**: Each minute (540 pre-computed minutes from 08:00–17:00) may invoke hash lookup operations, but only at the user's request. Therefore, the worst-case writing and reading hash tables would be $O(M*n+u*n)$ where $M$ = 540 minutes in the work day (writing the hash tables) and $u$ = the number of user lookup requests (reading hash tables). However, the critical bottleneck is the route construction at $O(n²)$. Even though the **overall complexity is** $O(n²)$, the effective complexity remains acceptable for a typical route size, which will not exceed $O(16²)$ = $O(256)$ per route due to the capacity of each truck.
 
 #### Space Complexity

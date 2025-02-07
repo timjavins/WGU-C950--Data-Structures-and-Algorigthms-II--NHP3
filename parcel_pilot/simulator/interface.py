@@ -124,6 +124,8 @@ class InfoDisplayUI:
         The label displaying the total miles traveled.
     score_label : ttk.Label
         The label displaying the score.
+    current_state : Minute
+        The current simulation state via the Minute class.
     """
 
     def __init__(self, root, time_simulator, simulation_states, map_locations):
@@ -152,21 +154,22 @@ class InfoDisplayUI:
         self.time_label = ttk.Label(root, text="", font=("Helvetica", 16))
         self.time_label.pack(pady=10)
 
-        # Package information display
+        # Package information dashboard
         self.package_frame = ttk.Frame(root)
         self.package_frame.pack(fill='both', expand=True)
-        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Delivery Time", "Deadline", "Timely", "Group", "Destination", "Location", "Truck", "Notes"), show="headings")
+        self.package_tree = ttk.Treeview(self.package_frame, columns=("PID", "Status", "Deadline", "Group", "Destination", "Location", "Truck", "Notes"), show="headings")
         self.package_tree.heading("PID", text="PID")
         self.package_tree.heading("Status", text="Status")
-        self.package_tree.heading("Delivery Time", text="Delivery Time")
         self.package_tree.heading("Deadline", text="Deadline")
-        self.package_tree.heading("Timely", text="Timely")
         self.package_tree.heading("Group", text="Group")
         self.package_tree.heading("Destination", text="Destination")
         self.package_tree.heading("Location", text="Location")
         self.package_tree.heading("Truck", text="Truck")
         self.package_tree.heading("Notes", text="Notes")
         self.package_tree.pack(fill='both', expand=True)
+
+        # Bind double-click event to on_package_double_click method
+        self.package_tree.bind("<Double-1>", self.on_package_double_click)
         
         # Truck information display
         self.truck_frame = ttk.Frame(root)
@@ -247,6 +250,8 @@ class InfoDisplayUI:
             self.package_tree.delete(item)
         for item in self.truck_tree.get_children():
             self.truck_tree.delete(item)
+        # Update the current state in the class
+        self.current_state = simulation_state
         # Populate the package information
         self.populate_package_info(simulation_state.packages)
         # Populate the truck information
@@ -284,9 +289,7 @@ class InfoDisplayUI:
         for item in package_list:
             pid = item[0]
             status = item[7]
-            delivery_time = item[15]
             deadline = item[5]
-            timely = item[16]
             group = item[12]
             destination = self.location_lookup(item[14])
             location = self.location_lookup(item[11])
@@ -297,11 +300,97 @@ class InfoDisplayUI:
             self.package_tree.insert(
                 "",
                 "end",
-                values=(pid, status, delivery_time, deadline, timely, group, destination, location, truck_id, notes),
+                values=(pid, status, deadline, group, destination, location, truck_id, notes),
                 tags=(tag,)
             )
             indices += 1
+
+    def on_package_double_click(self, event):
+        """
+        Handles the event when a package is double-clicked in the UI.
     
+        Parameters
+        ----------
+        event : Event
+            The event object containing information about the double-click event.
+        package_hash : PackageHashTable
+            The hash table containing package data.
+    
+        Returns
+        -------
+        None
+    
+        Space Complexity
+        ---------------
+            O(1)
+    
+        Time Complexity
+        ---------------
+            O(1)
+        """
+        # Get the selected item
+        selected_item = event.widget.selection()
+        if not selected_item:
+            return
+    
+        # Get the package ID from the selected item
+        package_id = event.widget.item(selected_item[0], 'values')[0]
+
+        for bucket in self.current_state.packages.table:
+            if bucket is not None:
+                for item in bucket:
+                    if item[0] == package_id:
+                        package_details = item
+                        break
+    
+        # Display package details in a new window or dialog
+        details_window = tk.Toplevel()
+        details_window.title(f"Package {package_id}")
+        
+        # Bind 'Esc' key to close the window
+        details_window.bind("<Escape>", lambda e: details_window.destroy())
+        
+        # Create a text widget to display the package details
+        text_widget = tk.Text(details_window, wrap=tk.WORD)
+        text_widget.pack(expand=True, fill=tk.BOTH)
+        
+        # Insert package details into the text widget
+        details_text = (
+            f"Package ID: {package_details[0]}\n"
+            f"Address: {package_details[1]}\n"
+            f"City: {package_details[2]}\n"
+            f"State: {package_details[3]}\n"
+            f"Zip Code: {package_details[4]}\n"
+            f"Deadline: {package_details[5]}\n"
+            f"Weight: {package_details[6]}\n"
+            f"Status: {package_details[7]}\n"
+            f"Notes: {package_details[8]}\n"
+        )
+        text_widget.insert(tk.END, details_text)
+        text_widget.config(state=tk.DISABLED)
+        
+        # Force a geometry update
+        details_window.update_idletasks()
+        
+        # Optionally, you can compute a new width/height based on the number of characters/lines.
+        # For example, count lines and choose a suitable width based on the longest line:
+        lines = details_text.split('\n')
+        longest_line = max(lines, key=len)
+        # Estimate width (you might need to adjust the multiplier based on your font)
+        new_width = max(300, len(longest_line) * 7)
+        new_height = max(150, len(lines) * 20)
+        
+        # Apply the calculated geometry
+        cursor_x = event.x_root
+        cursor_y = event.y_root
+        new_x = cursor_x - new_width
+        new_y = cursor_y
+        
+        details_window.geometry(f"{new_width}x{new_height}+{new_x}+{new_y}")
+        
+        # Set focus to the new window so it becomes active
+        details_window.focus_force()
+
     def populate_truck_info(self, truck_hash):
         """
         Populates the truck information display with the given truck hash table.
@@ -332,7 +421,8 @@ class InfoDisplayUI:
         for item in truck_list:
             truck_id = item[0]
             truck_data = item[1]
-            package_list = truck_data['packages']
+            # Sort the package_list converting each element to int to properly sort numerically
+            package_list = sorted(truck_data['packages'], key=lambda x: int(x))
             last_location = self.location_lookup(truck_data['current_location'])
             package_ids = ", ".join(str(pkg_id) for pkg_id in package_list)  # Directly use pkg_id
             total_time = self.format_time(truck_data['total_time']) # Convert total time to hours and minutes

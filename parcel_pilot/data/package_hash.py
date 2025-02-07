@@ -25,6 +25,25 @@ class PackageHashTable:
         self.table = [[] for _ in range(size)]
         self.count = 0
 
+    def __len__(self):
+        """
+        Returns the number of packages in the hash table.
+
+        Returns
+        -------
+        int
+            The number of packages in the hash table.
+
+        Space Complexity
+        ----------------
+        O(1)
+
+        Time Complexity
+        ---------------
+        O(1)
+        """
+        return self.count
+    
     def _hash(self, key):
         """
         Generates a hash for a given key.
@@ -48,6 +67,7 @@ class PackageHashTable:
         O(n)
         """
         return sum(ord(char) for char in key) % self.size
+    
     
     def _grow(self):
         """

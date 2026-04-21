@@ -1,7 +1,5 @@
 Timothy Javins
 
-ID 000698100
-
 ---
 
 # Program Overview
